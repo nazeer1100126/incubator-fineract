@@ -28,11 +28,11 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import org.joda.time.LocalDate;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_loan_interest_recalculation_additional_details")
-public class LoanInterestRecalcualtionAdditionalDetails extends AbstractPersistable<Long> {
+public class LoanInterestRecalcualtionAdditionalDetails extends AbstractPersistableCustom<Long> {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "effective_date")

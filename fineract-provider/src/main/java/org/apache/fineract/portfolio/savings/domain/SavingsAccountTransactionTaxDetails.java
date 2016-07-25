@@ -28,11 +28,11 @@ import javax.persistence.Table;
 
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.tax.domain.TaxComponent;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_savings_account_transaction_tax_details")
-public class SavingsAccountTransactionTaxDetails extends AbstractPersistable<Long> {
+public class SavingsAccountTransactionTaxDetails extends AbstractPersistableCustom<Long> {
 
     @ManyToOne
     @JoinColumn(name = "tax_component_id", nullable = false)

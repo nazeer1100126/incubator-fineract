@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 description = '''\
 Run as:
 gradle clean tomcatrunwar
@@ -5,6 +23,7 @@ gradle clean tomcatrunwar
 buildscript {
   repositories {
   	 jcenter()
+  	 mavenCentral()
   }
 
   dependencies {
@@ -12,6 +31,8 @@ buildscript {
                'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0',
                'org.zeroturnaround:gradle-jrebel-plugin:1.1.2',
                'org.springframework.boot:spring-boot-gradle-plugin:1.1.6.RELEASE' // also change springDataJpaVersion below
+     classpath 'org.apache.openjpa:openjpa-all:2.4.1'
+     classpath 'at.schmutterer.oss.gradle:gradle-openjpa:0.2.0'
   }
 }
 
@@ -24,6 +45,7 @@ apply plugin: 'idea'
 apply plugin: 'tomcat'
 apply plugin: 'project-report'
 apply plugin: 'java'
+apply plugin: 'openjpa'
 
 /* define the valid syntax level for source files */
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -45,6 +67,14 @@ group = 'org.apache.fineract'
 repositories {
 	jcenter()
 	// mavenLocal() // useful for local dev using MariaDB4j SNAPSHOTs (not needed for real-world non-SNAPHOT builds)
+}
+openjpa {
+    files = fileTree(sourceSets.main.output.classesDir).matching {
+		include '**/AbstractPersistableCustom.class'
+		include '**/domain/*.class'
+		
+    }
+    enforcePropertyRestrictions = true
 }
 
 configurations {

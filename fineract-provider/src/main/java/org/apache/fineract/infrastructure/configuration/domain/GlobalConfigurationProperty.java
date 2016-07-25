@@ -29,14 +29,14 @@ import javax.persistence.Table;
 import org.apache.fineract.infrastructure.configuration.exception.GlobalConfigurationPropertyCannotBeModfied;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.security.exception.ForcePasswordResetException;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "c_configuration")
-public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
+public class GlobalConfigurationProperty extends AbstractPersistableCustom<Long> {
 
     @Column(name = "name", nullable = false)
-    private final String name;
+    private String name;
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
@@ -48,7 +48,7 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
     private Date dateValue;
 
     @Column(name = "description", nullable = true)
-    private final String description;
+    private String description;
 
     @Column(name = "is_trap_door", nullable = false)
     private boolean isTrapDoor;

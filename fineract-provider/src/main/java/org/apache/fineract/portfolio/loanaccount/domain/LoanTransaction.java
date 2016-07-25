@@ -54,7 +54,7 @@ import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 /**
  * All monetary transactions against a loan are modelled through this entity.
@@ -62,7 +62,7 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
  */
 @Entity
 @Table(name = "m_loan_transaction", uniqueConstraints = { @UniqueConstraint(columnNames = { "external_id" }, name = "external_id_UNIQUE") })
-public final class LoanTransaction extends AbstractPersistable<Long> {
+public final class LoanTransaction extends AbstractPersistableCustom<Long> {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "loan_id", nullable = false)
@@ -77,15 +77,15 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
     private PaymentDetail paymentDetail;
 
     @Column(name = "transaction_type_enum", nullable = false)
-    private final Integer typeOf;
+    private Integer typeOf;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "transaction_date", nullable = false)
-    private final Date dateOf;
+    private Date dateOf;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "submitted_on_date", nullable = false)
-    private final Date submittedOnDate;
+    private Date submittedOnDate;
 
     @Column(name = "amount", scale = 6, precision = 19, nullable = false)
     private BigDecimal amount;
@@ -120,7 +120,7 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
 
     @ManyToOne
     @JoinColumn(name = "appuser_id", nullable = true)
-    private final AppUser appUser;
+    private AppUser appUser;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loanTransaction", orphanRemoval = true, fetch=FetchType.EAGER)
     private Set<LoanChargePaidBy> loanChargesPaid = new HashSet<>();
