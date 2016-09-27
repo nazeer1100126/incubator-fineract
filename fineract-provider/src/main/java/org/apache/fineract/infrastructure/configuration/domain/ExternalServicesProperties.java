@@ -52,7 +52,7 @@ public class ExternalServicesProperties {
         this.value = value;
 
     }
-
+    
     public static ExternalServicesProperties fromJson(final ExternalService externalService, final JsonCommand command) {
         final String name = command.stringValueOfParameterNamed(EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS.NAME.getValue());
         final String value = command.stringValueOfParameterNamed(EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS.VALUE.getValue());
@@ -81,4 +81,9 @@ public class ExternalServicesProperties {
         return new ExternalServicesPropertiesData(this.externalServicePropertiesPK.getName(), this.value);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        ExternalServicesProperties to = (ExternalServicesProperties) obj ;
+        return to.externalServicePropertiesPK.equals(this.externalServicePropertiesPK) ;
+    }
 }

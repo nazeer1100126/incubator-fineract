@@ -48,5 +48,17 @@ public class ExternalServicePropertiesPK implements Serializable {
     public Long getExternalService() {
         return externalServiceId;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        ExternalServicePropertiesPK to = (ExternalServicePropertiesPK) obj ;
+        return to.externalServiceId.equals(this.externalServiceId) ;
+    }
 
+    @Override
+    public int hashCode() {
+        int hashCode = 17;
+        hashCode += null == externalServiceId ? 0 : externalServiceId.hashCode() * 31;
+        return hashCode;
+    }
 }

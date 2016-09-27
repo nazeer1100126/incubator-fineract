@@ -28,7 +28,7 @@ import org.apache.fineract.portfolio.loanproduct.domain.InterestRecalculationCom
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductInterestRecalculationDetails;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanRescheduleStrategyMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.RecalculationFrequencyType;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 /**
  * Entity for holding interest recalculation setting, details will be copied
@@ -39,7 +39,7 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
 @Table(name = "m_loan_recalculation_details")
-public class LoanInterestRecalculationDetails extends AbstractPersistable<Long> {
+public class LoanInterestRecalculationDetails extends AbstractPersistableCustom<Long> {
 
     @OneToOne
     @JoinColumn(name = "loan_id", nullable = false)

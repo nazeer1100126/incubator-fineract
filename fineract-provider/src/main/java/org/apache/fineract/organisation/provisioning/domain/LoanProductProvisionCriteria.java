@@ -25,11 +25,11 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_loanproduct_provisioning_mapping", uniqueConstraints = { @UniqueConstraint(columnNames = { "product_id" }, name = "product_id") })
-public class LoanProductProvisionCriteria extends AbstractPersistable<Long> {
+public class LoanProductProvisionCriteria extends AbstractPersistableCustom<Long> {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "criteria_id", referencedColumnName = "id", nullable = false)

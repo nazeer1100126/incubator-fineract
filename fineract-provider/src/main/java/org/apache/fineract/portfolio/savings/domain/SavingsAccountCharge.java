@@ -51,7 +51,7 @@ import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.charge.exception.SavingsAccountChargeWithoutMandatoryFieldException;
 import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 /**
  * @author dv6
@@ -59,7 +59,7 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
  */
 @Entity
 @Table(name = "m_savings_account_charge")
-public class SavingsAccountCharge extends AbstractPersistable<Long> {
+public class SavingsAccountCharge extends AbstractPersistableCustom<Long> {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "savings_account_id", referencedColumnName = "id", nullable = false)

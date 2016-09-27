@@ -69,7 +69,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId) {
         // Check if client exists
         this.clientReadPlatformService.retrieveOne(clientId);
-        final String loanwhereClause = " where l.client_id = ?";
+        final String loanwhereClause = " where l.client_id = ? ;";
         final String savingswhereClause = " where sa.client_id = ? order by sa.status_enum ASC, sa.account_no ASC";
         final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
         final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[] { clientId });

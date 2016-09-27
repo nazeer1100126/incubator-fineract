@@ -35,11 +35,11 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_account_transfer_details")
-public class AccountTransferDetails extends AbstractPersistable<Long> {
+public class AccountTransferDetails extends AbstractPersistableCustom<Long> {
 
     @ManyToOne
     @JoinColumn(name = "from_office_id", nullable = false)

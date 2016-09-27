@@ -72,8 +72,9 @@ public class LoanRepositoryWrapper {
         return this.repository.saveAndFlush(loan) ;
     }
     
+    @Transactional
     public Loan save(final Loan loan) {
-        return this.repository.save(loan) ;
+        return this.repository.saveAndFlush(loan) ;
     }
     
     public List<Loan> save(List<Loan> loans) {

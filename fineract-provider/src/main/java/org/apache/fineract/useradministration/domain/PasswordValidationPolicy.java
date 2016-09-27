@@ -25,11 +25,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_password_validation_policy")
-public class PasswordValidationPolicy extends AbstractPersistable<Long> {
+public class PasswordValidationPolicy extends AbstractPersistableCustom<Long> {
 
     // private final static Logger logger =
     // LoggerFactory.getLogger(PasswordValidationPolicy.class);

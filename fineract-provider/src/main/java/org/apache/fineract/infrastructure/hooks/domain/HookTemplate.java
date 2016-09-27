@@ -32,11 +32,11 @@ import javax.persistence.Table;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_hook_templates")
-public class HookTemplate extends AbstractPersistable<Long> {
+public class HookTemplate extends AbstractPersistableCustom<Long> {
 
 	@Column(name = "name", nullable = false, length = 100)
 	private String name;

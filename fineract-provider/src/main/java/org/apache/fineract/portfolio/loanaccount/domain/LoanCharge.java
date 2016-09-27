@@ -54,11 +54,11 @@ import org.apache.fineract.portfolio.charge.exception.LoanChargeWithoutMandatory
 import org.apache.fineract.portfolio.loanaccount.command.LoanChargeCommand;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargePaidDetail;
 import org.joda.time.LocalDate;
-import org.springframework.data.jpa.domain.AbstractPersistable;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
 @Table(name = "m_loan_charge")
-public class LoanCharge extends AbstractPersistable<Long> {
+public class LoanCharge extends AbstractPersistableCustom<Long> {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "loan_id", referencedColumnName = "id", nullable = false)
@@ -121,7 +121,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
     private BigDecimal maxCap;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loancharge", orphanRemoval = true, fetch=FetchType.EAGER)
-    private final Set<LoanInstallmentCharge> loanInstallmentCharge = new HashSet<>();
+    private Set<LoanInstallmentCharge> loanInstallmentCharge = new HashSet<>();
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;

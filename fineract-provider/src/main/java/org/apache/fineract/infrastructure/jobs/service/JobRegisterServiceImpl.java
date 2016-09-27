@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.OptimisticLockException;
 
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.exception.PlatformInternalServerException;
@@ -119,7 +120,7 @@ public class JobRegisterServiceImpl implements JobRegisterService, ApplicationLi
             for (final ScheduledJobDetail jobDetails : scheduledJobDetails) {
                 scheduleJob(jobDetails);
                 jobDetails.updateTriggerMisfired(false);
-                this.schedularWritePlatformService.saveOrUpdate(jobDetails);
+                this.schedularWritePlatformService.saveOrUpdate(jobDetails);    
             }
             final SchedulerDetail schedulerDetail = this.schedularWritePlatformService.retriveSchedulerDetail();
             if (schedulerDetail.isResetSchedulerOnBootup()) {
