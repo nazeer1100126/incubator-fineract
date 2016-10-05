@@ -114,7 +114,7 @@ public class ProvisioningCriteriaWritePlatformServiceJpaRepositoryImpl implement
             final Map<String, Object> changes = provisioningCriteria.update(command, products) ;
             if(!changes.isEmpty()) {
                 updateProvisioningCriteriaDefinitions(provisioningCriteria, command) ;
-                provisioningCriteriaRepository.save(provisioningCriteria) ;    
+                provisioningCriteriaRepository.saveAndFlush(provisioningCriteria) ;    
             }
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(provisioningCriteria.getId()).build();	
     	} catch (final DataIntegrityViolationException dve) {

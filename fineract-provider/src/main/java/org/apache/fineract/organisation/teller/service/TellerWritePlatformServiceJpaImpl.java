@@ -45,11 +45,9 @@ import org.apache.fineract.organisation.teller.domain.CashierTransaction;
 import org.apache.fineract.organisation.teller.domain.CashierTransactionRepository;
 import org.apache.fineract.organisation.teller.domain.CashierTxnType;
 import org.apache.fineract.organisation.teller.domain.Teller;
-import org.apache.fineract.organisation.teller.domain.TellerRepository;
 import org.apache.fineract.organisation.teller.domain.TellerRepositoryWrapper;
 import org.apache.fineract.organisation.teller.exception.CashierExistForTellerException;
 import org.apache.fineract.organisation.teller.exception.CashierNotFoundException;
-import org.apache.fineract.organisation.teller.exception.TellerNotFoundException;
 import org.apache.fineract.organisation.teller.serialization.TellerCommandFromApiJsonDeserializer;
 import org.apache.fineract.portfolio.client.domain.ClientTransaction;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -67,7 +65,6 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
     private final PlatformSecurityContext context;
     private final TellerCommandFromApiJsonDeserializer fromApiJsonDeserializer;
-    private final TellerRepository tellerRepository;
     private final TellerRepositoryWrapper tellerRepositoryWrapper;
     private final OfficeRepositoryWrapper officeRepositoryWrapper;
     private final StaffRepository staffRepository;
@@ -78,14 +75,13 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
     @Autowired
     public TellerWritePlatformServiceJpaImpl(final PlatformSecurityContext context,
-            final TellerCommandFromApiJsonDeserializer fromApiJsonDeserializer, final TellerRepository tellerRepository,
+            final TellerCommandFromApiJsonDeserializer fromApiJsonDeserializer,
             final TellerRepositoryWrapper tellerRepositoryWrapper, final OfficeRepositoryWrapper officeRepositoryWrapper,
             final StaffRepository staffRepository, CashierRepository cashierRepository, CashierTransactionRepository cashierTxnRepository,
             JournalEntryRepository glJournalEntryRepository,
             FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
-        this.tellerRepository = tellerRepository;
         this.tellerRepositoryWrapper = tellerRepositoryWrapper;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
         this.staffRepository = staffRepository;
@@ -111,7 +107,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             final Teller teller = Teller.fromJson(tellerOffice, command);
 
             // pre save to generate id for use in office hierarchy
-            this.tellerRepository.save(teller);
+            this.tellerRepositoryWrapper.save(teller);
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -140,7 +136,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             final Map<String, Object> changes = teller.update(tellerOffice, command);
 
             if (!changes.isEmpty()) {
-                this.tellerRepository.saveAndFlush(teller);
+                this.tellerRepositoryWrapper.saveAndFlush(teller);
             }
 
             return new CommandProcessingResultBuilder() //
@@ -163,15 +159,10 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
         final Long userOfficeId = currentUser.getOffice().getId();
         final Office userOffice = this.officeRepositoryWrapper.findOfficeHierarchy(userOfficeId);
-        final Teller tellerToReturn = this.tellerRepository.findOne(tellerId);
-        if (tellerToReturn != null) {
-            final Long tellerOfficeId = tellerToReturn.officeId();
-            if (userOffice.doesNotHaveAnOfficeInHierarchyWithId(tellerOfficeId)) { throw new NoAuthorizationException(
+        final Teller tellerToReturn = this.tellerRepositoryWrapper.findOneWithNotFoundDetection(tellerId);
+        final Long tellerOfficeId = tellerToReturn.officeId();
+        if (userOffice.doesNotHaveAnOfficeInHierarchyWithId(tellerOfficeId)) { throw new NoAuthorizationException(
                     "User does not have sufficient priviledges to act on the provided office."); }
-        } else {
-            throw new TellerNotFoundException(tellerId);
-        }
-
         return tellerToReturn;
     }
 
@@ -188,7 +179,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
                     .equalsIgnoreCase(tellerId.toString())) { throw new CashierExistForTellerException(tellerId); }
 
         }
-        tellerRepository.delete(teller);
+        tellerRepositoryWrapper.delete(teller);
         return new CommandProcessingResultBuilder() //
                 .withEntityId(teller.getId()) //
                 .build();
@@ -223,8 +214,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             Long minEndTime;
             String startTime = " ";
             String endTime = " ";
-            final Teller teller = this.tellerRepository.findOne(tellerId);
-            if (teller == null) { throw new TellerNotFoundException(tellerId); }
+            final Teller teller = this.tellerRepositoryWrapper.findOneWithNotFoundDetection(tellerId);
             final Office tellerOffice = teller.getOffice();
 
             final Long staffId = command.longValueOfParameterNamed("staffId");

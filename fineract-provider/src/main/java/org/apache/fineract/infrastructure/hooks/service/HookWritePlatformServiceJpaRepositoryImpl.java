@@ -192,12 +192,9 @@ public class HookWritePlatformServiceJpaRepositoryImpl
     public CommandProcessingResult deleteHook(final Long hookId) {
 
         this.context.authenticatedUser();
-
         final Hook hook = retrieveHookBy(hookId);
-
         try {
             this.hookRepository.delete(hook);
-            this.hookRepository.flush();
         } catch (final DataIntegrityViolationException e) {
             throw new PlatformDataIntegrityException(
                     "error.msg.unknown.data.integrity.issue",
