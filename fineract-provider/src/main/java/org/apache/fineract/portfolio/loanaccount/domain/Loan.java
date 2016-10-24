@@ -6389,7 +6389,6 @@ public class Loan extends AbstractPersistableCustom<Long> {
     public Collection<LoanCharge> getLoanCharges() {
         return this.charges;
     }
-    
     public void initializeLazyCollections() {
         this.charges.size() ;
         this.trancheCharges.size() ;
@@ -6411,5 +6410,8 @@ public class Loan extends AbstractPersistableCustom<Long> {
     
     public void initializeRepaymentSchedule() {
         this.repaymentScheduleInstallments.size() ;
+    }
+    public boolean hasInvalidLoanType() {
+        return AccountType.fromInt(this.loanType).isInvalid();
     }
 }
