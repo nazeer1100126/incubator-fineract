@@ -25,6 +25,7 @@ import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignTriggerWith
 import org.apache.fineract.infrastructure.campaigns.sms.serialization.SmsCampaignValidator;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.domain.Report;
@@ -35,11 +36,10 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
 @Table(name = "sms_campaign")
-public class SmsCampaign extends AbstractPersistable<Long> {
+public class SmsCampaign extends AbstractPersistableCustom<Long> {
 
     @Column(name = "campaign_name", nullable = false)
     private String campaignName;
@@ -96,18 +96,18 @@ public class SmsCampaign extends AbstractPersistable<Long> {
     @JoinColumn(name = "approvedon_userid", nullable = true)
     private AppUser approvedBy;
 
-    @Column(name = "recurrence", nullable = false)
+    @Column(name = "recurrence", nullable = true)
     private String recurrence;
 
-    @Column(name = "next_trigger_date", nullable = false)
+    @Column(name = "next_trigger_date", nullable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private Date nextTriggerDate;
 
-    @Column(name = "last_trigger_date", nullable = false)
+    @Column(name = "last_trigger_date", nullable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastTriggerDate;
 
-    @Column(name = "recurrence_start_date", nullable = false)
+    @Column(name = "recurrence_start_date", nullable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private Date recurrenceStartDate;
 

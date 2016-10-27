@@ -64,7 +64,7 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
         // logged in tenant. Now Temp implementation to proceed with feature
         // complete
         Collection<SmsProviderData> smsProviderOptions = new ArrayList<>();
-        GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms");
+        GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms_bridge");
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -88,7 +88,7 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
             smsProviderOptions = responseOne.getBody();
             if (!responseOne.getStatusCode().equals(HttpStatus.OK)) {
                 System.out.println(responseOne.getStatusCode().name());
-                throw new ConnectionFailureException("sms");
+                throw new ConnectionFailureException("sms_bridge");
             }
         } catch (Exception e) {
             e.getStackTrace();

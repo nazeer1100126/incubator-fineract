@@ -1,21 +1,25 @@
 package org.apache.fineract.infrastructure.sms.scheduler;
 
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.ws.rs.core.UriBuilder;
+
+import org.apache.fineract.infrastructure.campaigns.sms.data.GatewayConnectionConfigurationData;
 import org.apache.fineract.infrastructure.campaigns.sms.domain.SmsCampaign;
+import org.apache.fineract.infrastructure.campaigns.sms.exception.ConnectionFailureException;
+import org.apache.fineract.infrastructure.campaigns.sms.service.GatewayConnectionConfigurationReadPlatformService;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
+import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
-import org.apache.fineract.infrastructure.sms.data.SmsData;
 import org.apache.fineract.infrastructure.sms.data.SmsMessageApiQueueResourceData;
-import org.apache.fineract.infrastructure.sms.data.SmsMessageApiResponseData;
 import org.apache.fineract.infrastructure.sms.data.SmsMessageDeliveryReportData;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageRepository;
@@ -25,16 +29,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Scheduled job services that send SMS messages and get delivery reports for
@@ -47,161 +51,100 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     private final SmsReadPlatformService smsReadPlatformService;
     private static final Logger logger = LoggerFactory.getLogger(SmsMessageScheduledJobServiceImpl.class);
     private final RestTemplate restTemplate = new RestTemplate();
+    private final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService;
 
     /**
      * SmsMessageScheduledJobServiceImpl constructor
      **/
     @Autowired
-    public SmsMessageScheduledJobServiceImpl(SmsMessageRepository smsMessageRepository, SmsReadPlatformService smsReadPlatformService) {
+    public SmsMessageScheduledJobServiceImpl(SmsMessageRepository smsMessageRepository, SmsReadPlatformService smsReadPlatformService,
+            final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService) {
         this.smsMessageRepository = smsMessageRepository;
         this.smsReadPlatformService = smsReadPlatformService;
-    }
-
-    /**
-     * get a new HttpEntity with the provided body
-     **/
-    private HttpEntity<String> getHttpEntity(String body, String apiAuthUsername, String apiAuthPassword) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-        String authorization = apiAuthUsername + ":" + apiAuthPassword;
-
-        byte[] encodedAuthorisation = Base64.encode(authorization.getBytes());
-        headers.add("Authorization", "Basic " + new String(encodedAuthorisation));
-
-        return new HttpEntity<>(body, headers);
-    }
-
-    /**
-     * Format destination phone number so it is in international format without
-     * the leading "0" or "+", example: 31612345678
-     * 
-     * @param phoneNumber
-     *            the phone number to be formated
-     * @param countryCallingCode
-     *            the country calling code
-     * @return phone number in international format
-     **/
-    private String formatDestinationPhoneNumber(String phoneNumber, String countryCallingCode) {
-        String formatedPhoneNumber = "";
-
-        try {
-            Long phoneNumberToLong = Long.parseLong(phoneNumber);
-            Long countryCallingCodeToLong = Long.parseLong(countryCallingCode);
-            formatedPhoneNumber = Long.toString(countryCallingCodeToLong) + Long.toString(phoneNumberToLong);
-        }
-
-        catch (Exception e) {
-            logger.error("Invalid phone number or country calling code, must contain only numbers", e);
-        }
-
-        return formatedPhoneNumber;
+        this.configurationReadPlatformService = configurationReadPlatformService;
     }
 
     /**
      * Send batches of SMS messages to the SMS gateway (or intermediate gateway)
      **/
-    @SuppressWarnings("unused")
     @Override
     @Transactional
     @CronTarget(jobName = JobName.SEND_MESSAGES_TO_SMS_GATEWAY)
     public void sendMessagesToGateway() {
-        try {
-            Integer smsSqlLimit = 100;
-            final Collection<SmsData> pendingMessages = this.smsReadPlatformService.retrieveAllPending(null, smsSqlLimit);
-            if (pendingMessages.size() > 0) {
-                Iterator<SmsData> pendingMessageIterator = pendingMessages.iterator();
-                Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas = new ArrayList<>();
-                while (pendingMessageIterator.hasNext()) {
-                    SmsData smsData = pendingMessageIterator.next();
+        Integer pageLimit = 1;
+        Integer page = 0;
+        int totalRecords = 0;
+        do {
+            PageRequest pageRequest = new PageRequest(0, pageLimit);
+            org.springframework.data.domain.Page<SmsMessage> pendingMessages = this.smsMessageRepository.findByStatusType(
+                    SmsMessageStatusType.PENDING.getValue(), pageRequest);
+            List<SmsMessage> toSaveMessages = new ArrayList<>() ;
+            try {
 
-                    // this.sendMessages();
+                if (pendingMessages.getContent().size() > 0) {
 
-                    final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
-                    SmsMessageApiQueueResourceData apiQueueResourceData = SmsMessageApiQueueResourceData.instance(smsData.getId(),
-                            tenant.getTenantIdentifier(), null, null, smsData.getMobileNo(), smsData.getMessage(), smsData.getProviderId());
-                    apiQueueResourceDatas.add(apiQueueResourceData);
+                    final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
+                    Iterator<SmsMessage> pendingMessageIterator = pendingMessages.iterator();
+                    Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas = new ArrayList<>();
+                    while (pendingMessageIterator.hasNext()) {
+                        SmsMessage smsData = pendingMessageIterator.next();
 
+                        SmsMessageApiQueueResourceData apiQueueResourceData = SmsMessageApiQueueResourceData.instance(smsData.getId(),
+                                tenantIdentifier, null, null, smsData.getMobileNo(), smsData.getMessage(), smsData.getSmsCampaign()
+                                        .getProviderId());
+                        apiQueueResourceDatas.add(apiQueueResourceData);
+                        smsData.setStatusType(SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue());
+                        toSaveMessages.add(smsData) ;
+                    }
+                    this.smsMessageRepository.save(toSaveMessages);
+                    this.smsMessageRepository.flush();
+                    new MyThread(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas).start();
                 }
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl("http://192.168.0.110:9191/sms/default");
-
-                HttpEntity<?> entity = new HttpEntity<>(SmsMessageApiQueueResourceData.toJsonString(apiQueueResourceDatas), headers);
-
-                ResponseEntity<String> responseOne = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity,
-                        new ParameterizedTypeReference<String>() {});
-                String smsProviderOptions = responseOne.getBody();
-
-                logger.info(pendingMessages.size() + " pending message(s) successfully sent to the intermediate gateway - sms"
-                        + JobName.SEND_MESSAGES_TO_SMS_GATEWAY.name());
+            } catch (Exception e) {
+                throw new ConnectionFailureException("sms");
             }
-        }
-
-        catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
+            page ++;
+            totalRecords = pendingMessages.getTotalPages();
+        } while (page < totalRecords);
     }
+    
+    class MyThread extends Thread {
+    	
+    	final FineractPlatformTenant tenant ;
+    	
+    	final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas ;
+    	
+    	public MyThread(final FineractPlatformTenant tenant, final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
+    		this.tenant = tenant ;
+    		this.apiQueueResourceDatas = apiQueueResourceDatas ;
+    	}
+    	
+    	@Override
+    	public void run() {
+    		ThreadLocalContextUtil.setTenant(tenant);
+    		 connectAndSendToIntermediateServer(tenant.getTenantIdentifier(), apiQueueResourceDatas);
+    	}
+    }
+    private void connectAndSendToIntermediateServer(String tenantIdentifier,
+            Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
+        GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        UriBuilder builder = UriBuilder.fromPath("{endPoint}/{tenantId}").host(configurationData.getHostName()).scheme("http")
+                .port(configurationData.getPortNumber());
 
-    /**
-     * handles the sending of messages to the intermediate gateway and updating
-     * of the external ID, status of each message
-     * 
-     * @param smsData
-     */
-    private void sendMessages() {
+        URI uri = builder.build(configurationData.getEndPoint(), tenantIdentifier);
 
-        // make request
-        final ResponseEntity<SmsMessageApiResponseData> entity = restTemplate.postForEntity(null + "/queue",
-                getHttpEntity(null, null, null), SmsMessageApiResponseData.class);
+        HttpEntity<?> entity = new HttpEntity<>(SmsMessageApiQueueResourceData.toJsonString(apiQueueResourceDatas), headers);
 
-        final List<SmsMessageDeliveryReportData> smsMessageDeliveryReportDataList = entity.getBody().getData();
-        final Iterator<SmsMessageDeliveryReportData> deliveryReportIterator = smsMessageDeliveryReportDataList.iterator();
-
-        while (deliveryReportIterator.hasNext()) {
-            SmsMessageDeliveryReportData smsMessageDeliveryReportData = deliveryReportIterator.next();
-
-            if (!smsMessageDeliveryReportData.getHasError()) {
-                SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
-
-                // initially set the status type enum to 100
-                Integer statusType = SmsMessageStatusType.PENDING.getValue();
-
-                switch (smsMessageDeliveryReportData.getDeliveryStatus()) {
-                    case 100:
-                    case 200:
-                        statusType = SmsMessageStatusType.SENT.getValue();
-                    break;
-
-                    case 300:
-                        statusType = SmsMessageStatusType.DELIVERED.getValue();
-                    break;
-
-                    case 400:
-                        statusType = SmsMessageStatusType.FAILED.getValue();
-                    break;
-
-                    default:
-                        statusType = SmsMessageStatusType.INVALID.getValue();
-                    break;
-                }
-
-                // update the externalId of the SMS message
-                smsMessage.setExternalId(smsMessageDeliveryReportData.getExternalId());
-
-//                // update the SMS message sender
-//                smsMessage.setSourceAddress(sourceAddress);
-
-                // update the status Type enum
-                smsMessage.setStatusType(statusType);
-
-                // save the SmsMessage entity
-                this.smsMessageRepository.save(smsMessage);
-
-                // deduct one credit from the tenant's SMS credits
-            }
+        ResponseEntity<String> responseOne = restTemplate.exchange(uri, HttpMethod.POST, entity,
+                new ParameterizedTypeReference<String>() {});
+        @SuppressWarnings("unused")
+        String smsResponse = responseOne.getBody();
+        if (null != responseOne && !responseOne.getStatusCode().equals(HttpStatus.ACCEPTED.value())) {
+            System.out.println(responseOne.getStatusCode().name());
+            throw new ConnectionFailureException("sms");
         }
-
     }
 
     @Override
@@ -235,79 +178,90 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     @Transactional
     @CronTarget(jobName = JobName.GET_DELIVERY_REPORTS_FROM_SMS_GATEWAY)
     public void getDeliveryReports() {
-        /*final String apiAuthUsername = "root";
-        final String apiAuthPassword = "localhost";
-        final String apiBaseUrl = "http://localhost:8080/mlite-sms/api/v1/sms";
         final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+        int page = 0;
+        int totalRecords = 0;
+        Integer limit = 1;
+        do {
+            Page<Long> smsMessageInternalIds = this.smsReadPlatformService.retrieveAllWaitingForDeliveryReport(limit);
+            // only proceed if there are sms message with status type enum 300
+            try {
 
-        try {
-            List<Long> smsMessageExternalIds = this.smsReadPlatformService.retrieveExternalIdsOfAllSent(0);
-            SmsMessageApiReportResourceData smsMessageApiReportResourceData = SmsMessageApiReportResourceData.instance(
-                    smsMessageExternalIds, tenant.getTenantIdentifier());
+                if (smsMessageInternalIds.getPageItems().size() > 0) {
+                    GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService
+                            .retrieveOneByConnectionName("sms");
+                    // make request
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    UriBuilder builder = UriBuilder.fromPath("{endPoint}/{tenantId}").host(configurationData.getHostName()).scheme("http")
+                            .port(configurationData.getPortNumber());
 
-            // only proceed if there are sms message with status type enum
-            // 200
-            if (smsMessageExternalIds.size() > 0) {
+                    URI uri = builder.build(configurationData.getEndPoint(), tenant.getTenantIdentifier());
 
-                // make request
-                ResponseEntity<SmsMessageApiResponseData> entity = restTemplate.postForEntity(apiBaseUrl + "/report",
-                        getHttpEntity(smsMessageApiReportResourceData.toJsonString(), apiAuthUsername, apiAuthPassword),
-                        SmsMessageApiResponseData.class);
+                    HttpEntity<?> entity = new HttpEntity<>(smsMessageInternalIds, headers);
 
-                List<SmsMessageDeliveryReportData> smsMessageDeliveryReportDataList = entity.getBody().getData();
-                Iterator<SmsMessageDeliveryReportData> iterator1 = smsMessageDeliveryReportDataList.iterator();
+                    ResponseEntity<Collection<SmsMessageDeliveryReportData>> responseOne = restTemplate.exchange(uri, HttpMethod.GET,
+                            entity, new ParameterizedTypeReference<Collection<SmsMessageDeliveryReportData>>() {});
 
-                while (iterator1.hasNext()) {
-                    SmsMessageDeliveryReportData smsMessageDeliveryReportData = iterator1.next();
-                    Integer deliveryStatus = smsMessageDeliveryReportData.getDeliveryStatus();
+                    Collection<SmsMessageDeliveryReportData> smsMessageDeliveryReportDatas = responseOne.getBody();
 
-                    if (!smsMessageDeliveryReportData.getHasError() && (deliveryStatus != 100 && deliveryStatus != 200)) {
-                        SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
-                        Integer statusType = smsMessage.getStatusType();
-                        boolean statusChanged = false;
+                    Iterator<SmsMessageDeliveryReportData> responseReportIterator = smsMessageDeliveryReportDatas.iterator();
 
-                        switch (deliveryStatus) {
-                            case 0:
-                                statusType = SmsMessageStatusType.INVALID.getValue();
-                            break;
-                            case 300:
-                                statusType = SmsMessageStatusType.DELIVERED.getValue();
-                            break;
+                    while (responseReportIterator.hasNext()) {
+                        SmsMessageDeliveryReportData smsMessageDeliveryReportData = responseReportIterator.next();
+                        Integer deliveryStatus = smsMessageDeliveryReportData.getDeliveryStatus();
 
-                            case 400:
-                                statusType = SmsMessageStatusType.FAILED.getValue();
-                            break;
+                        if (!smsMessageDeliveryReportData.getHasError()
+                                && (deliveryStatus != 100 && deliveryStatus != 200 && deliveryStatus != 300)) {
+                            SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
+                            Integer statusType = smsMessage.getStatusType();
+                            boolean statusChanged = false;
 
-                            default:
-                                statusType = smsMessage.getStatusType();
-                            break;
-                        }
+                            switch (deliveryStatus) {
+                                case 0:
+                                    statusType = SmsMessageStatusType.INVALID.getValue();
+                                break;
+                                case 400:
+                                    statusType = SmsMessageStatusType.DELIVERED.getValue();
+                                break;
 
-                        statusChanged = !statusType.equals(smsMessage.getStatusType());
+                                case 500:
+                                    statusType = SmsMessageStatusType.FAILED.getValue();
+                                break;
 
-                        // update the status Type enum
-                        smsMessage.setStatusType(statusType);
+                                default:
+                                    statusType = smsMessage.getStatusType();
+                                break;
+                            }
 
-                        // save the SmsMessage entity
-                        this.smsMessageRepository.save(smsMessage);
+                            statusChanged = !statusType.equals(smsMessage.getStatusType());
 
-                        if (statusChanged) {
-                            logger.info("Status of SMS message id: " + smsMessage.getId() + " successfully changed to " + statusType);
+                            // update the status Type enum
+                            smsMessage.setStatusType(statusType);
+
+                            // save the SmsMessage entity
+                            this.smsMessageRepository.save(smsMessage);
+
+                            if (statusChanged) {
+                                logger.info("Status of SMS message id: " + smsMessage.getId() + " successfully changed to " + statusType);
+                            }
                         }
                     }
-                }
 
-                if (smsMessageDeliveryReportDataList.size() > 0) {
-                    logger.info(smsMessageDeliveryReportDataList.size() + " "
-                            + "delivery report(s) successfully received from the intermediate gateway - mlite-sms");
+                    if (smsMessageDeliveryReportDatas.size() > 0) {
+                        logger.info(smsMessageDeliveryReportDatas.size() + " "
+                                + "delivery report(s) successfully received from the intermediate gateway - sms");
+                    }
                 }
             }
-        }
 
-        catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }*/
-        logger.info("delivery report(s) successfully received from the intermediate gateway - mlite-sms"
-                + JobName.GET_DELIVERY_REPORTS_FROM_SMS_GATEWAY.name());
+            catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            logger.info("delivery report(s) successfully received from the intermediate gateway - sms"
+                    + JobName.GET_DELIVERY_REPORTS_FROM_SMS_GATEWAY.name());
+            page ++;
+            totalRecords = smsMessageInternalIds.getTotalFilteredRecords();
+        } while (page < totalRecords);
     }
 }

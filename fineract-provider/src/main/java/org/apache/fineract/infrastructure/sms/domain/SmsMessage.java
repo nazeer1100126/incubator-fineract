@@ -82,6 +82,10 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
     @Temporal(TemporalType.DATE)
     private Date submittedOnDate;
 
+    @Column(name = "delivered_on_date", nullable = true)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deliveredOnDate;
+
     public static SmsMessage pendingSms(final Long externalId, final Group group, final Client client, final Staff staff,
             final String message, final String mobileNo, final SmsCampaign smsCampaign) {
         return new SmsMessage(externalId, group, client, staff, SmsMessageStatusType.PENDING, message, mobileNo, smsCampaign);
@@ -165,5 +169,13 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
 
     public Date getSubmittedOnDate() {
         return this.submittedOnDate;
+    }
+
+    public Date getDeliveredOnDate() {
+        return this.deliveredOnDate;
+    }
+
+    public void setDeliveredOnDate(final Date deliveredOnDate) {
+        this.deliveredOnDate = deliveredOnDate;
     }
 }

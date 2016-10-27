@@ -44,6 +44,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageRepository;
 import org.apache.fineract.infrastructure.sms.scheduler.SmsMessageScheduledJobService;
+import org.apache.fineract.infrastructure.sms.service.SmsReadPlatformService;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
@@ -89,6 +90,7 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
     private final ReadReportingService readReportingService;
     private final GenericDataService genericDataService;
     private final FromJsonHelper fromJsonHelper;
+    private final SmsReadPlatformService smsReadPlatformService;
     
     private final SmsMessageScheduledJobService serviceui;
 
@@ -98,7 +100,7 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
             final ReportRepository reportRepository, final SmsMessageRepository smsMessageRepository,
             final ClientRepositoryWrapper clientRepositoryWrapper, final ReadReportingService readReportingService,
             final GenericDataService genericDataService, final FromJsonHelper fromJsonHelper, final GroupRepository groupRepository, 
-            final SmsMessageScheduledJobService serviceui) {
+            final SmsMessageScheduledJobService serviceui, final SmsReadPlatformService smsReadPlatformService) {
         this.context = context;
         this.smsCampaignRepository = smsCampaignRepository;
         this.smsCampaignValidator = smsCampaignValidator;
@@ -111,6 +113,7 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
         this.fromJsonHelper = fromJsonHelper;
         this.groupRepository = groupRepository;
         this.serviceui = serviceui;
+        this.smsReadPlatformService = smsReadPlatformService;
     }
 
     @Transactional
@@ -208,7 +211,8 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
                     Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId.longValue());
                     if (mobileNo != null) {
-                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, mobileNo.toString(),
+                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
+                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, formatDestinationPhoneNumber(mobileNo.toString(), countryCode),
                                 smsCampaign);
                         this.smsMessageRepository.save(smsMessage);
                     }
@@ -244,8 +248,9 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
                     Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId.longValue());
                     if (mobileNo != null) {
-                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, mobileNo.toString(),
-                                smsCampaign);
+                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
+                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, 
+                        formatDestinationPhoneNumber(mobileNo.toString(), countryCode), smsCampaign);
                         smsMessages.add(smsMessage);
                         this.smsMessageRepository.save(smsMessage);
                     }
@@ -597,5 +602,21 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
             }
         }
         return today;
+    }
+    
+    private String formatDestinationPhoneNumber(String phoneNumber, String countryCallingCode) {
+        String formatedPhoneNumber = "";
+
+        try {
+            Long phoneNumberToLong = Long.parseLong(phoneNumber);
+            Long countryCallingCodeToLong = Long.parseLong(countryCallingCode);
+            formatedPhoneNumber = Long.toString(countryCallingCodeToLong) + Long.toString(phoneNumberToLong);
+        }
+
+        catch (Exception e) {
+            logger.error("Invalid phone number or country calling code, must contain only numbers", e);
+        }
+
+        return formatedPhoneNumber;
     }
 }
