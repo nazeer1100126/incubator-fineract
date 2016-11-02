@@ -7,7 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.annotation.PostConstruct;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.fineract.infrastructure.campaigns.sms.data.GatewayConnectionConfigurationData;
@@ -28,6 +31,8 @@ import org.apache.fineract.infrastructure.sms.service.SmsReadPlatformService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
@@ -52,7 +57,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     private static final Logger logger = LoggerFactory.getLogger(SmsMessageScheduledJobServiceImpl.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService;
-
+    private  ExecutorService executorService ;
     /**
      * SmsMessageScheduledJobServiceImpl constructor
      **/
@@ -64,6 +69,10 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
         this.configurationReadPlatformService = configurationReadPlatformService;
     }
 
+    @PostConstruct
+    public void initializeExecutorService() {
+        executorService = Executors.newSingleThreadExecutor();
+    }
     /**
      * Send batches of SMS messages to the SMS gateway (or intermediate gateway)
      **/
@@ -82,7 +91,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
             try {
 
                 if (pendingMessages.getContent().size() > 0) {
-
+//                    ExecutorService executorService = ExecutorService.
                     final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
                     Iterator<SmsMessage> pendingMessageIterator = pendingMessages.iterator();
                     Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas = new ArrayList<>();
@@ -98,7 +107,9 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                     }
                     this.smsMessageRepository.save(toSaveMessages);
                     this.smsMessageRepository.flush();
-                    new MyThread(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas).start();
+                    this.executorService.execute(new SmsTask(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas));
+
+//                    new MyThread(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas).start();
                 }
             } catch (Exception e) {
                 throw new ConnectionFailureException("sms");
@@ -107,24 +118,49 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
             totalRecords = pendingMessages.getTotalPages();
         } while (page < totalRecords);
     }
-    
-    class MyThread extends Thread {
-    	
-    	final FineractPlatformTenant tenant ;
-    	
-    	final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas ;
-    	
-    	public MyThread(final FineractPlatformTenant tenant, final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
-    		this.tenant = tenant ;
-    		this.apiQueueResourceDatas = apiQueueResourceDatas ;
-    	}
-    	
-    	@Override
-    	public void run() {
-    		ThreadLocalContextUtil.setTenant(tenant);
-    		 connectAndSendToIntermediateServer(tenant.getTenantIdentifier(), apiQueueResourceDatas);
-    	}
+
+//    class MyThread extends Thread {
+//
+//        final FineractPlatformTenant tenant;
+//
+//        final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas;
+//
+//        public MyThread(final FineractPlatformTenant tenant, final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
+//            this.tenant = tenant;
+//            this.apiQueueResourceDatas = apiQueueResourceDatas;
+//        }
+//
+//        @Override
+//        public void run() {
+//            ThreadLocalContextUtil.setTenant(tenant);
+//            connectAndSendToIntermediateServer(tenant.getTenantIdentifier(), apiQueueResourceDatas);
+//        }
+//    }
+
+    class SmsTask implements Runnable, ApplicationListener<ContextClosedEvent> {
+
+        private final FineractPlatformTenant tenant;
+        private final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas;
+
+        public SmsTask(final FineractPlatformTenant tenant, final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
+            this.tenant = tenant;
+            this.apiQueueResourceDatas = apiQueueResourceDatas;
+        }
+
+        @Override
+        public void run() {
+            ThreadLocalContextUtil.setTenant(tenant);
+            connectAndSendToIntermediateServer(tenant.getTenantIdentifier(), apiQueueResourceDatas);
+        }
+
+        @Override
+        public void onApplicationEvent(@SuppressWarnings("unused") ContextClosedEvent event) {
+            executorService.shutdown();
+            logger.info("Shutting down the ExecutorService");
+        }
     }
+   
+
     private void connectAndSendToIntermediateServer(String tenantIdentifier,
             Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
         GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms");
@@ -139,11 +175,12 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 
         ResponseEntity<String> responseOne = restTemplate.exchange(uri, HttpMethod.POST, entity,
                 new ParameterizedTypeReference<String>() {});
-        @SuppressWarnings("unused")
-        String smsResponse = responseOne.getBody();
-        if (null != responseOne && !responseOne.getStatusCode().equals(HttpStatus.ACCEPTED.value())) {
-            System.out.println(responseOne.getStatusCode().name());
-            throw new ConnectionFailureException("sms");
+        if (responseOne != null) {
+//            String smsResponse = responseOne.getBody();
+            if (!responseOne.getStatusCode().equals(HttpStatus.ACCEPTED)) {
+                System.out.println(responseOne.getStatusCode().name());
+                throw new ConnectionFailureException("sms");
+            }
         }
     }
 
@@ -212,7 +249,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                         Integer deliveryStatus = smsMessageDeliveryReportData.getDeliveryStatus();
 
                         if (!smsMessageDeliveryReportData.getHasError()
-                                && (deliveryStatus != 100 && deliveryStatus != 200 && deliveryStatus != 300)) {
+                                && (deliveryStatus != 100 && deliveryStatus != 200)) {
                             SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
                             Integer statusType = smsMessage.getStatusType();
                             boolean statusChanged = false;
@@ -221,11 +258,11 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                                 case 0:
                                     statusType = SmsMessageStatusType.INVALID.getValue();
                                 break;
-                                case 400:
+                                case 300:
                                     statusType = SmsMessageStatusType.DELIVERED.getValue();
                                 break;
 
-                                case 500:
+                                case 400:
                                     statusType = SmsMessageStatusType.FAILED.getValue();
                                 break;
 

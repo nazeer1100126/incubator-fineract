@@ -605,7 +605,7 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
     }
     
     private String formatDestinationPhoneNumber(String phoneNumber, String countryCallingCode) {
-        String formatedPhoneNumber = "";
+        String formatedPhoneNumber = "+";
 
         try {
             Long phoneNumberToLong = Long.parseLong(phoneNumber);

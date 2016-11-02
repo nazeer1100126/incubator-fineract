@@ -22,10 +22,10 @@ public enum SmsMessageStatusType {
 
     INVALID(0, "smsMessageStatusType.invalid"), //
     PENDING(100, "smsMessageStatusType.pending"), //
-    WAITING_FOR_DELIVERY_REPORT(200, "smsMessageStatusType.waitingForDeliveryReport"), 
-    SENT(300, "smsMessageStatusType.sent"), //
-    DELIVERED(400, "smsMessageStatusType.delivered"), //
-    FAILED(500, "smsMessageStatusType.failed");
+    WAITING_FOR_DELIVERY_REPORT(150, "smsMessageStatusType.waitingForDeliveryReport"), 
+    SENT(200, "smsMessageStatusType.sent"), //
+    DELIVERED(300, "smsMessageStatusType.delivered"), //
+    FAILED(400, "smsMessageStatusType.failed");
 
     private final Integer value;
     private final String code;
@@ -37,16 +37,16 @@ public enum SmsMessageStatusType {
             case 100:
                 enumeration = SmsMessageStatusType.PENDING;
             break;
-            case 200:
+            case 150:
                 enumeration = SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT;
             break;
-            case 300:
+            case 200:
                 enumeration = SmsMessageStatusType.SENT;
             break;
-            case 400:
+            case 300:
                 enumeration = SmsMessageStatusType.DELIVERED;
             break;
-            case 500:
+            case 400:
                 enumeration = SmsMessageStatusType.FAILED;
             break;
         }
