@@ -45,6 +45,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.google.gson.Gson;
+
 /**
  * Scheduled job services that send SMS messages and get delivery reports for
  * the sent SMS messages
@@ -80,7 +82,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     @Transactional
     @CronTarget(jobName = JobName.SEND_MESSAGES_TO_SMS_GATEWAY)
     public void sendMessagesToGateway() {
-        Integer pageLimit = 1;
+        Integer pageLimit = 100;
         Integer page = 0;
         int totalRecords = 0;
         do {
@@ -218,7 +220,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
         final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
         int page = 0;
         int totalRecords = 0;
-        Integer limit = 1;
+        Integer limit = 100;
         do {
             Page<Long> smsMessageInternalIds = this.smsReadPlatformService.retrieveAllWaitingForDeliveryReport(limit);
             // only proceed if there are sms message with status type enum 300
@@ -230,15 +232,18 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                     // make request
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.APPLICATION_JSON);
-                    UriBuilder builder = UriBuilder.fromPath("{endPoint}/{tenantId}").host(configurationData.getHostName()).scheme("http")
+                    UriBuilder builder = UriBuilder.fromPath("/{endPoint}/report/{tenantId}").host(configurationData.getHostName()).scheme("http")
                             .port(configurationData.getPortNumber());
 
                     URI uri = builder.build(configurationData.getEndPoint(), tenant.getTenantIdentifier());
 
-                    HttpEntity<?> entity = new HttpEntity<>(smsMessageInternalIds, headers);
-
-                    ResponseEntity<Collection<SmsMessageDeliveryReportData>> responseOne = restTemplate.exchange(uri, HttpMethod.GET,
-                            entity, new ParameterizedTypeReference<Collection<SmsMessageDeliveryReportData>>() {});
+//                    HttpEntity<?> entity = new HttpEntity<>(new Gson().toJson(smsMessageInternalIds.getPageItems()), headers);
+                    HttpEntity<?> entity = new HttpEntity<>(new Gson().toJson(smsMessageInternalIds.getPageItems()), headers);
+//                    ResponseEntity<Collection<SmsMessageDeliveryReportData>> responseOne = restTemplate.exchange(uri, HttpMethod.GET,
+//                            entity, new ParameterizedTypeReference<Collection<SmsMessageDeliveryReportData>>() {});
+                    ResponseEntity<Collection<SmsMessageDeliveryReportData>> responseOne = restTemplate.exchange(uri, HttpMethod.POST, entity,
+                            new ParameterizedTypeReference<Collection<SmsMessageDeliveryReportData>>() {});
+//                    ResponseEntity<SmsMessageDeliveryReportDataWrapper> responseOne = restTemplate.postForEntity(uri.toString(), entity, SmsMessageDeliveryReportDataWrapper.class);
 
                     Collection<SmsMessageDeliveryReportData> smsMessageDeliveryReportDatas = responseOne.getBody();
 
@@ -249,7 +254,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                         Integer deliveryStatus = smsMessageDeliveryReportData.getDeliveryStatus();
 
                         if (!smsMessageDeliveryReportData.getHasError()
-                                && (deliveryStatus != 100 && deliveryStatus != 200)) {
+                                && (deliveryStatus != 100)) {
                             SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
                             Integer statusType = smsMessage.getStatusType();
                             boolean statusChanged = false;
@@ -257,6 +262,12 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                             switch (deliveryStatus) {
                                 case 0:
                                     statusType = SmsMessageStatusType.INVALID.getValue();
+                                break;
+                                case 150:
+                                    statusType = SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue();
+                                break;
+                                case 200:
+                                    statusType = SmsMessageStatusType.SENT.getValue();
                                 break;
                                 case 300:
                                     statusType = SmsMessageStatusType.DELIVERED.getValue();

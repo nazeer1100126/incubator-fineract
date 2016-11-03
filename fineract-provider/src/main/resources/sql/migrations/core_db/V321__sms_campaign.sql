@@ -1,31 +1,39 @@
-CREATE TABLE `m_sms_campaign`(
- `id` bigint(20) NOT NULL AUTO_INCREMENT,
- `campaign_name` varchar(100) NOT NULL,
- `campaign_type` int NOT NULL,
- `campaign_trigger_type` int NOT NULL,
- `provider_id` bigint(20) NOT NULL,
- `report_id` int NOT NULL,
- `param_value` text, 
- `status_enum` int NOT NULL,
- `message` text NOT NULL,
- `submittedon_date` date,
- `submittedon_userid` bigint(20),
- `approvedon_date` date,
- `approvedon_userid` bigint(20),
- `closedon_date` date,
- `closedon_userid` bigint(20),
- `recurrence` varchar(100),
- `next_trigger_date` datetime,
- `last_trigger_date` datetime,
- `recurrence_start_date` datetime,
- `is_visible` tinyint(1) Default 1,
- PRIMARY KEY (`id`),
- FOREIGN KEY (`report_id`) REFERENCES `stretchy_report` (`id`)
+CREATE TABLE `sms_campaign` (
+	`id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+	`campaign_name` VARCHAR(100) NOT NULL,
+	`campaign_type` INT(11) NOT NULL,
+	`campaign_trigger_type` INT(11) NOT NULL,
+	`report_id` INT(11) NOT NULL,
+	`provider_id` BIGINT(20) NOT NULL,
+	`trigger_entity_type` INT(11) NULL DEFAULT NULL,
+	`trigger_action_type` INT(11) NULL DEFAULT NULL,
+	`param_value` TEXT NULL,
+	`status_enum` INT(11) NOT NULL,
+	`message` TEXT NOT NULL,
+	`submittedon_date` DATE NULL DEFAULT NULL,
+	`submittedon_userid` BIGINT(20) NULL DEFAULT NULL,
+	`approvedon_date` DATE NULL DEFAULT NULL,
+	`approvedon_userid` BIGINT(20) NULL DEFAULT NULL,
+	`closedon_date` DATE NULL DEFAULT NULL,
+	`closedon_userid` BIGINT(20) NULL DEFAULT NULL,
+	`recurrence` VARCHAR(100) NULL DEFAULT NULL,
+	`next_trigger_date` DATETIME NULL DEFAULT NULL,
+	`last_trigger_date` DATETIME NULL DEFAULT NULL,
+	`recurrence_start_date` DATETIME NULL DEFAULT NULL,
+	`is_visible` TINYINT(1) NULL DEFAULT '1',
+	PRIMARY KEY (`id`),
+	INDEX `report_id` (`report_id`),
+	CONSTRAINT `sms_campaign_ibfk_1` FOREIGN KEY (`report_id`) REFERENCES `stretchy_report` (`id`)
 );
 
 
 ALTER TABLE `sms_messages_outbound`
-	ADD COLUMN `delivered_on_date` DATETIME NULL DEFAULT NULL;
+	ADD COLUMN `campaign_id` BIGINT(20) NOT NULL,
+	ADD COLUMN `external_id` BIGINT(20) NULL DEFAULT NULL,
+	ADD COLUMN `submittedon_date` DATE NULL DEFAULT NULL,
+	ADD COLUMN `delivered_on_date` DATETIME NULL DEFAULT NULL,
+	ADD INDEX `FKCAMPAIGN00000001` (`campaign_id`),
+	ADD CONSTRAINT `FKCAMPAIGN00000001` FOREIGN KEY (`campaign_id`) REFERENCES `sms_campaign` (`id`);
 
 
 INSERT INTO `job` (`name`, `display_name`, `cron_expression`, `create_time`, `task_priority`, `group_name`, `previous_run_start_time`, `next_run_time`, `job_key`, `initializing_errorlog`, `is_active`, `currently_running`, `updates_allowed`, `scheduler_group`, `is_misfired`) VALUES 
@@ -49,7 +57,7 @@ INSERT INTO  `m_permission`
 
 
 
-INSERT INTO `m_code_value` (`code_id`, `code_value`, `code_description`, `order_position`, `code_score`, `is_active`, `is_mandatory`) VALUES ((SELECT `id` FROM `m_code` mc WHERE mc.code_name = "GROUPROLE" AND isSystemDefined), 'Leader', 'Group Leader Role', 1, NULL, 1, 0);
+INSERT INTO `m_code_value` (`code_id`, `code_value`, `code_description`, `order_position`, `code_score`, `is_active`, `is_mandatory`) VALUES ((SELECT `id` FROM `m_code` mc WHERE mc.code_name = "GROUPROLE" AND is_system_defined), 'Leader', 'Group Leader Role', 1, NULL, 1, 0);
 
 
 
@@ -149,6 +157,17 @@ CREATE TABLE `m_office_country_mapping` (
 );
 
 
-
-
 INSERT INTO `m_office_country_mapping` (`office_id`, `country_name`, `country_code`) VALUES ((SELECT id FROM m_office WHERE name = 'Head Office'), 'india', '91');
+
+
+CREATE TABLE `m_intermediate_server_connections` (
+	`id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+	`connection_name` VARCHAR(100) NOT NULL,
+	`host_name` VARCHAR(100) NOT NULL,
+	`url_end_point` VARCHAR(100) NOT NULL,
+	`port_number` INT(11) NULL DEFAULT NULL,
+	`username` VARCHAR(100) NULL DEFAULT NULL,
+	`password` VARCHAR(100) NULL DEFAULT NULL,
+	`ssl_enabled` TINYINT(1) NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`)
+);

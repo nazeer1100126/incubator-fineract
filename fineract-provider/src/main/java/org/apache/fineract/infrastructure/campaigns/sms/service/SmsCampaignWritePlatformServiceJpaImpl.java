@@ -605,18 +605,19 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
     }
     
     private String formatDestinationPhoneNumber(String phoneNumber, String countryCallingCode) {
-        String formatedPhoneNumber = "+";
+        StringBuilder formatedPhoneNumber = new StringBuilder("+");
 
         try {
             Long phoneNumberToLong = Long.parseLong(phoneNumber);
             Long countryCallingCodeToLong = Long.parseLong(countryCallingCode);
-            formatedPhoneNumber = Long.toString(countryCallingCodeToLong) + Long.toString(phoneNumberToLong);
+            formatedPhoneNumber.append(Long.toString(countryCallingCodeToLong));
+            formatedPhoneNumber.append(Long.toString(phoneNumberToLong));
         }
 
         catch (Exception e) {
             logger.error("Invalid phone number or country calling code, must contain only numbers", e);
         }
 
-        return formatedPhoneNumber;
+        return formatedPhoneNumber.toString();
     }
 }

@@ -60,23 +60,12 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
 
     @Override
     public Collection<SmsProviderData> retrieveSmsProviders() {
-        // Todo-> Retrieve these details from intermediate server based on
-        // logged in tenant. Now Temp implementation to proceed with feature
-        // complete
         Collection<SmsProviderData> smsProviderOptions = new ArrayList<>();
         GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms_bridge");
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
-            /*
-             * UriComponentsBuilder builder =
-             * UriComponentsBuilder.fromPath(configurationData
-             * .getHostName()).scheme("http")
-             * .port(configurationData.getPortNumber
-             * ()).path(configurationData.getEndPoint
-             * ()).path(tenant.getTenantIdentifier());
-             */
             UriBuilder builder = UriBuilder.fromPath("{endPoint}/{tenantId}").host(configurationData.getHostName()).scheme("http")
                     .port(configurationData.getPortNumber());
 
