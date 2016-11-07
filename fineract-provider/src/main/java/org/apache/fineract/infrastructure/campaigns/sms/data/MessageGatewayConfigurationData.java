@@ -1,6 +1,6 @@
 package org.apache.fineract.infrastructure.campaigns.sms.data;
 
-public class GatewayConnectionConfigurationData {
+public class MessageGatewayConfigurationData {
 
     private final Long id;
     private final String connectionName;
@@ -10,9 +10,10 @@ public class GatewayConnectionConfigurationData {
     private final String userName;
     private final String password;
     private final boolean sslEnabled;
+    private final String tenantAppKey;
 
-    public GatewayConnectionConfigurationData(final Long id, final String connectionName, final String hostName, final int portNumber,
-            final String endPoint, final String userName, final String password, final boolean sslEnabled) {
+    public MessageGatewayConfigurationData(final Long id, final String connectionName, final String hostName, final int portNumber,
+            final String endPoint, final String userName, final String password, final boolean sslEnabled, final String tenantAppKey) {
         this.id = id;
         this.connectionName = connectionName;
         this.hostName = hostName;
@@ -21,6 +22,7 @@ public class GatewayConnectionConfigurationData {
         this.userName = userName;
         this.password = password;
         this.sslEnabled = sslEnabled;
+        this.tenantAppKey = tenantAppKey;
     }
 
     public Long getId() {
@@ -55,4 +57,7 @@ public class GatewayConnectionConfigurationData {
         return this.sslEnabled;
     }
 
+    public String getTenantAppKey() {
+        return this.tenantAppKey;
+    }
 }

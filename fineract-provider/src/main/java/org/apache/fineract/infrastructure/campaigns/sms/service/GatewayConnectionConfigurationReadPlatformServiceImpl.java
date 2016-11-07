@@ -3,7 +3,7 @@ package org.apache.fineract.infrastructure.campaigns.sms.service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.apache.fineract.infrastructure.campaigns.sms.data.GatewayConnectionConfigurationData;
+import org.apache.fineract.infrastructure.campaigns.sms.data.MessageGatewayConfigurationData;
 import org.apache.fineract.infrastructure.campaigns.sms.exception.GatewayConnectionConfigurationNotFound;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
@@ -26,7 +26,7 @@ public class GatewayConnectionConfigurationReadPlatformServiceImpl implements Ga
     }
 
     @Override
-    public GatewayConnectionConfigurationData retrieveOneByConnectionName(String connectionName) {
+    public MessageGatewayConfigurationData retrieveOneByConnectionName(String connectionName) {
         try {
             final String sql = "select " + this.gatewayConfigRowMapper.schema() + " where isc.connection_name = ?";
             return this.jdbcTemplate.queryForObject(sql, this.gatewayConfigRowMapper, new Object[] { connectionName });
@@ -35,7 +35,7 @@ public class GatewayConnectionConfigurationReadPlatformServiceImpl implements Ga
         }
     }
 
-    private static final class GatewayConfigRowMapper implements RowMapper<GatewayConnectionConfigurationData> {
+    private static final class GatewayConfigRowMapper implements RowMapper<MessageGatewayConfigurationData> {
 
         final String schema;
 
@@ -48,7 +48,8 @@ public class GatewayConnectionConfigurationReadPlatformServiceImpl implements Ga
             sql.append("isc.port_number as portNumber, ");
             sql.append("isc.username as userName, ");
             sql.append("isc.password as password, ");
-            sql.append("isc.ssl_enabled as sslEnabled ");
+            sql.append("isc.ssl_enabled as sslEnabled, ");
+            sql.append("isc.tenant_app_key as tenantAppKey ");
             sql.append("from m_intermediate_server_connections isc ");
 
             this.schema = sql.toString();
@@ -59,7 +60,7 @@ public class GatewayConnectionConfigurationReadPlatformServiceImpl implements Ga
         }
 
         @Override
-        public GatewayConnectionConfigurationData mapRow(ResultSet rs, @SuppressWarnings("unused") int rowNum) throws SQLException {
+        public MessageGatewayConfigurationData mapRow(ResultSet rs, @SuppressWarnings("unused") int rowNum) throws SQLException {
             Long id = JdbcSupport.getLong(rs, "id");
             String connectionName = rs.getString("connectionName");
             String hostName = rs.getString("hostName");
@@ -68,8 +69,9 @@ public class GatewayConnectionConfigurationReadPlatformServiceImpl implements Ga
             String userName = rs.getString("userName");
             String password = rs.getString("password");
             boolean sslEnabled = rs.getBoolean("sslEnabled");
-            return new GatewayConnectionConfigurationData(id, connectionName, hostName, portNumber, endPoint, userName, password,
-                    sslEnabled);
+            String tenantAppKey = rs.getString("tenantAppKey");
+            return new MessageGatewayConfigurationData(id, connectionName, hostName, portNumber, endPoint, userName, password,
+                    sslEnabled, tenantAppKey);
         }
 
     }

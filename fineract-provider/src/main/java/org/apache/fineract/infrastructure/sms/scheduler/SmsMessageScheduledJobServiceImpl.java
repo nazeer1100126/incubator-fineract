@@ -13,10 +13,11 @@ import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.core.UriBuilder;
 
-import org.apache.fineract.infrastructure.campaigns.sms.data.GatewayConnectionConfigurationData;
+import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignConstants;
+import org.apache.fineract.infrastructure.campaigns.sms.data.MessageGatewayConfigurationData;
 import org.apache.fineract.infrastructure.campaigns.sms.domain.SmsCampaign;
 import org.apache.fineract.infrastructure.campaigns.sms.exception.ConnectionFailureException;
-import org.apache.fineract.infrastructure.campaigns.sms.service.GatewayConnectionConfigurationReadPlatformService;
+import org.apache.fineract.infrastructure.configuration.service.ExternalServicesPropertiesReadPlatformService;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
@@ -58,23 +59,25 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     private final SmsReadPlatformService smsReadPlatformService;
     private static final Logger logger = LoggerFactory.getLogger(SmsMessageScheduledJobServiceImpl.class);
     private final RestTemplate restTemplate = new RestTemplate();
-    private final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService;
+    private final ExternalServicesPropertiesReadPlatformService propertiesReadPlatformService;
     private  ExecutorService executorService ;
+
     /**
      * SmsMessageScheduledJobServiceImpl constructor
      **/
     @Autowired
     public SmsMessageScheduledJobServiceImpl(SmsMessageRepository smsMessageRepository, SmsReadPlatformService smsReadPlatformService,
-            final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService) {
+            final ExternalServicesPropertiesReadPlatformService propertiesReadPlatformService) {
         this.smsMessageRepository = smsMessageRepository;
         this.smsReadPlatformService = smsReadPlatformService;
-        this.configurationReadPlatformService = configurationReadPlatformService;
+        this.propertiesReadPlatformService = propertiesReadPlatformService;
     }
 
     @PostConstruct
     public void initializeExecutorService() {
         executorService = Executors.newSingleThreadExecutor();
     }
+
     /**
      * Send batches of SMS messages to the SMS gateway (or intermediate gateway)
      **/
@@ -82,7 +85,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     @Transactional
     @CronTarget(jobName = JobName.SEND_MESSAGES_TO_SMS_GATEWAY)
     public void sendMessagesToGateway() {
-        Integer pageLimit = 100;
+        Integer pageLimit = 200;
         Integer page = 0;
         int totalRecords = 0;
         do {
@@ -93,7 +96,6 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
             try {
 
                 if (pendingMessages.getContent().size() > 0) {
-//                    ExecutorService executorService = ExecutorService.
                     final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
                     Iterator<SmsMessage> pendingMessageIterator = pendingMessages.iterator();
                     Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas = new ArrayList<>();
@@ -114,30 +116,12 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 //                    new MyThread(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas).start();
                 }
             } catch (Exception e) {
-                throw new ConnectionFailureException("sms");
+                throw new ConnectionFailureException(SmsCampaignConstants.SMS);
             }
             page ++;
             totalRecords = pendingMessages.getTotalPages();
         } while (page < totalRecords);
     }
-
-//    class MyThread extends Thread {
-//
-//        final FineractPlatformTenant tenant;
-//
-//        final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas;
-//
-//        public MyThread(final FineractPlatformTenant tenant, final Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
-//            this.tenant = tenant;
-//            this.apiQueueResourceDatas = apiQueueResourceDatas;
-//        }
-//
-//        @Override
-//        public void run() {
-//            ThreadLocalContextUtil.setTenant(tenant);
-//            connectAndSendToIntermediateServer(tenant.getTenantIdentifier(), apiQueueResourceDatas);
-//        }
-//    }
 
     class SmsTask implements Runnable, ApplicationListener<ContextClosedEvent> {
 
@@ -161,17 +145,22 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
             logger.info("Shutting down the ExecutorService");
         }
     }
-   
 
     private void connectAndSendToIntermediateServer(String tenantIdentifier,
             Collection<SmsMessageApiQueueResourceData> apiQueueResourceDatas) {
-        GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms");
+        MessageGatewayConfigurationData messageGatewayConfigurationData = this.propertiesReadPlatformService.getSMSGateway();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        UriBuilder builder = UriBuilder.fromPath("{endPoint}/{tenantId}").host(configurationData.getHostName()).scheme("http")
-                .port(configurationData.getPortNumber());
+        headers.add(SmsCampaignConstants.FINERACT_PLATFORM_TENANT_ID, tenantIdentifier);
+        headers.add(SmsCampaignConstants.FINERACT_TENANT_APP_KEY, messageGatewayConfigurationData.getTenantAppKey());
+        StringBuilder pathBuilder = new StringBuilder();
+        pathBuilder = (messageGatewayConfigurationData.getEndPoint() != null ? pathBuilder.append("{endPoint}/sms")
+                : pathBuilder.append("sms"));
+        UriBuilder builder = UriBuilder.fromPath(pathBuilder.toString()).host(messageGatewayConfigurationData.getHostName()).scheme("http")
+                .port(messageGatewayConfigurationData.getPortNumber());
 
-        URI uri = builder.build(configurationData.getEndPoint(), tenantIdentifier);
+        URI uri = (messageGatewayConfigurationData.getEndPoint() != null ? builder.build(messageGatewayConfigurationData.getEndPoint())
+                : builder.build());
 
         HttpEntity<?> entity = new HttpEntity<>(SmsMessageApiQueueResourceData.toJsonString(apiQueueResourceDatas), headers);
 
@@ -181,7 +170,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 //            String smsResponse = responseOne.getBody();
             if (!responseOne.getStatusCode().equals(HttpStatus.ACCEPTED)) {
                 System.out.println(responseOne.getStatusCode().name());
-                throw new ConnectionFailureException("sms");
+                throw new ConnectionFailureException(SmsCampaignConstants.SMS);
             }
         }
     }
@@ -220,30 +209,31 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
         final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
         int page = 0;
         int totalRecords = 0;
-        Integer limit = 100;
+        Integer limit = 200;
         do {
             Page<Long> smsMessageInternalIds = this.smsReadPlatformService.retrieveAllWaitingForDeliveryReport(limit);
             // only proceed if there are sms message with status type enum 300
             try {
 
                 if (smsMessageInternalIds.getPageItems().size() > 0) {
-                    GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService
-                            .retrieveOneByConnectionName("sms");
                     // make request
+                    MessageGatewayConfigurationData messageGatewayConfigurationData = this.propertiesReadPlatformService.getSMSGateway();
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.APPLICATION_JSON);
-                    UriBuilder builder = UriBuilder.fromPath("/{endPoint}/report/{tenantId}").host(configurationData.getHostName()).scheme("http")
-                            .port(configurationData.getPortNumber());
+                    headers.add(SmsCampaignConstants.FINERACT_PLATFORM_TENANT_ID, tenant.getTenantIdentifier());
+                    headers.add(SmsCampaignConstants.FINERACT_TENANT_APP_KEY, messageGatewayConfigurationData.getTenantAppKey());
+                    StringBuilder pathBuilder = new StringBuilder();
+                    pathBuilder = (messageGatewayConfigurationData.getEndPoint() != null ? pathBuilder.append("{endPoint}/sms/report")
+                            : pathBuilder.append("report"));
+                    UriBuilder builder = UriBuilder.fromPath(pathBuilder.toString()).host(messageGatewayConfigurationData.getHostName()).scheme("http")
+                            .port(messageGatewayConfigurationData.getPortNumber());
 
-                    URI uri = builder.build(configurationData.getEndPoint(), tenant.getTenantIdentifier());
+                    URI uri = (messageGatewayConfigurationData.getEndPoint() != null ? builder.build(messageGatewayConfigurationData.getEndPoint())
+                            : builder.build());
 
-//                    HttpEntity<?> entity = new HttpEntity<>(new Gson().toJson(smsMessageInternalIds.getPageItems()), headers);
                     HttpEntity<?> entity = new HttpEntity<>(new Gson().toJson(smsMessageInternalIds.getPageItems()), headers);
-//                    ResponseEntity<Collection<SmsMessageDeliveryReportData>> responseOne = restTemplate.exchange(uri, HttpMethod.GET,
-//                            entity, new ParameterizedTypeReference<Collection<SmsMessageDeliveryReportData>>() {});
                     ResponseEntity<Collection<SmsMessageDeliveryReportData>> responseOne = restTemplate.exchange(uri, HttpMethod.POST, entity,
                             new ParameterizedTypeReference<Collection<SmsMessageDeliveryReportData>>() {});
-//                    ResponseEntity<SmsMessageDeliveryReportDataWrapper> responseOne = restTemplate.postForEntity(uri.toString(), entity, SmsMessageDeliveryReportDataWrapper.class);
 
                     Collection<SmsMessageDeliveryReportData> smsMessageDeliveryReportDatas = responseOne.getBody();
 
@@ -306,8 +296,6 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
             catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
-            logger.info("delivery report(s) successfully received from the intermediate gateway - sms"
-                    + JobName.GET_DELIVERY_REPORTS_FROM_SMS_GATEWAY.name());
             page ++;
             totalRecords = smsMessageInternalIds.getTotalFilteredRecords();
         } while (page < totalRecords);

@@ -1,9 +1,9 @@
 package org.apache.fineract.infrastructure.campaigns.sms.service;
 
-import org.apache.fineract.infrastructure.campaigns.sms.data.GatewayConnectionConfigurationData;
+import org.apache.fineract.infrastructure.campaigns.sms.data.MessageGatewayConfigurationData;
 
 public interface GatewayConnectionConfigurationReadPlatformService {
 
-    GatewayConnectionConfigurationData retrieveOneByConnectionName(String connectionName);
+    MessageGatewayConfigurationData retrieveOneByConnectionName(String connectionName);
 
 }

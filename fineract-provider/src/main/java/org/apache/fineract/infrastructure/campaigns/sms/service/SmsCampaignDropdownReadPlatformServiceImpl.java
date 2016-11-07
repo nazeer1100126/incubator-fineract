@@ -9,13 +9,15 @@ import java.util.List;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.fineract.infrastructure.campaigns.constants.CampaignType;
+import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignConstants;
 import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignEnumerations;
 import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignTriggerType;
 import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignTriggerWithSubTypes;
-import org.apache.fineract.infrastructure.campaigns.sms.data.GatewayConnectionConfigurationData;
+import org.apache.fineract.infrastructure.campaigns.sms.data.MessageGatewayConfigurationData;
 import org.apache.fineract.infrastructure.campaigns.sms.data.SmsProviderData;
 import org.apache.fineract.infrastructure.campaigns.sms.data.TriggerTypeWithSubTypesData;
 import org.apache.fineract.infrastructure.campaigns.sms.exception.ConnectionFailureException;
+import org.apache.fineract.infrastructure.configuration.service.ExternalServicesPropertiesReadPlatformService;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
@@ -38,13 +40,12 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
 
     private final RestTemplate restTemplate;
 
-    private final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService;
+    private final ExternalServicesPropertiesReadPlatformService propertiesReadPlatformService;
 
     @Autowired
-    public SmsCampaignDropdownReadPlatformServiceImpl(
-            final GatewayConnectionConfigurationReadPlatformService configurationReadPlatformService) {
+    public SmsCampaignDropdownReadPlatformServiceImpl(final ExternalServicesPropertiesReadPlatformService propertiesReadPlatformService) {
         this.restTemplate = new RestTemplate();
-        this.configurationReadPlatformService = configurationReadPlatformService;
+        this.propertiesReadPlatformService = propertiesReadPlatformService;
     }
 
     @Override
@@ -61,15 +62,23 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
     @Override
     public Collection<SmsProviderData> retrieveSmsProviders() {
         Collection<SmsProviderData> smsProviderOptions = new ArrayList<>();
-        GatewayConnectionConfigurationData configurationData = this.configurationReadPlatformService.retrieveOneByConnectionName("sms_bridge");
         try {
+            MessageGatewayConfigurationData messageGatewayConfigurationData = this.propertiesReadPlatformService.getSMSGateway();
+            final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            final FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
-            UriBuilder builder = UriBuilder.fromPath("{endPoint}/{tenantId}").host(configurationData.getHostName()).scheme("http")
-                    .port(configurationData.getPortNumber());
+            headers.add(SmsCampaignConstants.FINERACT_PLATFORM_TENANT_ID, tenant.getTenantIdentifier());
+            headers.add(SmsCampaignConstants.FINERACT_TENANT_APP_KEY, messageGatewayConfigurationData.getTenantAppKey());
 
-            URI uri = builder.build(configurationData.getEndPoint(), tenant.getTenantIdentifier());
+            StringBuilder pathBuilder = new StringBuilder();
+            pathBuilder = (messageGatewayConfigurationData.getEndPoint() != null ? pathBuilder.append("{endPoint}/smsbridges")
+                    : pathBuilder.append("smsbridges"));
+            UriBuilder builder = UriBuilder.fromPath(pathBuilder.toString()).host(messageGatewayConfigurationData.getHostName())
+                    .scheme("http").port(messageGatewayConfigurationData.getPortNumber());
+
+            URI uri = (messageGatewayConfigurationData.getEndPoint() != null ? builder.build(messageGatewayConfigurationData.getEndPoint())
+                    : builder.build());
+
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
             ResponseEntity<Collection<SmsProviderData>> responseOne = restTemplate.exchange(uri, HttpMethod.GET, entity,
@@ -77,7 +86,7 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
             smsProviderOptions = responseOne.getBody();
             if (!responseOne.getStatusCode().equals(HttpStatus.OK)) {
                 System.out.println(responseOne.getStatusCode().name());
-                throw new ConnectionFailureException("sms_bridge");
+                throw new ConnectionFailureException(SmsCampaignConstants.SMS_BRIDGE);
             }
         } catch (Exception e) {
             e.getStackTrace();

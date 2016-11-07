@@ -211,8 +211,8 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
                     Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId.longValue());
                     if (mobileNo != null) {
-                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
-                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, formatDestinationPhoneNumber(mobileNo.toString(), countryCode),
+//                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
+                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, mobileNo.toString(),
                                 smsCampaign);
                         this.smsMessageRepository.save(smsMessage);
                     }
@@ -248,9 +248,9 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
                     Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId.longValue());
                     if (mobileNo != null) {
-                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
+//                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
                         SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, 
-                        formatDestinationPhoneNumber(mobileNo.toString(), countryCode), smsCampaign);
+                        mobileNo.toString(), smsCampaign);
                         smsMessages.add(smsMessage);
                         this.smsMessageRepository.save(smsMessage);
                     }
@@ -604,20 +604,20 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
         return today;
     }
     
-    private String formatDestinationPhoneNumber(String phoneNumber, String countryCallingCode) {
-        StringBuilder formatedPhoneNumber = new StringBuilder("+");
-
-        try {
-            Long phoneNumberToLong = Long.parseLong(phoneNumber);
-            Long countryCallingCodeToLong = Long.parseLong(countryCallingCode);
-            formatedPhoneNumber.append(Long.toString(countryCallingCodeToLong));
-            formatedPhoneNumber.append(Long.toString(phoneNumberToLong));
-        }
-
-        catch (Exception e) {
-            logger.error("Invalid phone number or country calling code, must contain only numbers", e);
-        }
-
-        return formatedPhoneNumber.toString();
-    }
+//    private String formatDestinationPhoneNumber(String phoneNumber, String countryCallingCode) {
+//        StringBuilder formatedPhoneNumber = new StringBuilder("+");
+//
+//        try {
+//            Long phoneNumberToLong = Long.parseLong(phoneNumber);
+//            Long countryCallingCodeToLong = Long.parseLong(countryCallingCode);
+//            formatedPhoneNumber.append(Long.toString(countryCallingCodeToLong));
+//            formatedPhoneNumber.append(Long.toString(phoneNumberToLong));
+//        }
+//
+//        catch (Exception e) {
+//            logger.error("Invalid phone number or country calling code, must contain only numbers", e);
+//        }
+//
+//        return formatedPhoneNumber.toString();
+//    }
 }
