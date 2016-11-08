@@ -33,11 +33,9 @@ import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
-import org.apache.fineract.infrastructure.sms.data.SmsCountryData;
 import org.apache.fineract.infrastructure.sms.data.SmsData;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageEnumerations;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageStatusType;
-import org.apache.fineract.infrastructure.sms.exception.SmsCountryCodeNotFoundException;
 import org.apache.fineract.infrastructure.sms.exception.SmsNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -51,13 +49,11 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
     private final JdbcTemplate jdbcTemplate;
     private final SmsMapper smsRowMapper;
     private final PaginationHelper<SmsData> paginationHelper = new PaginationHelper<>();
-    private final SmsCountryMapper smsCountryMapper;
 
     @Autowired
     public SmsReadPlatformServiceImpl(final RoutingDataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.smsRowMapper = new SmsMapper();
-        this.smsCountryMapper = new SmsCountryMapper();
     }
 
     private static final class SmsMapper implements RowMapper<SmsData> {
@@ -146,8 +142,8 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
     @Override
     public Collection<SmsData> retrieveAllSent(final Integer limit) {
         final String sqlPlusLimit = (limit > 0) ? " limit 0, " + limit : "";
-        final String sql = "select " + this.smsRowMapper.schema() + " where smo.status_enum = " + SmsMessageStatusType.SENT.getValue()
-                + sqlPlusLimit;
+        final String sql = "select " + this.smsRowMapper.schema() + " where smo.status_enum IN (" + SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue()
+                + "," + SmsMessageStatusType.SENT.getValue() + ")" + sqlPlusLimit;
 
         return this.jdbcTemplate.query(sql, this.smsRowMapper, new Object[] {});
     }
@@ -247,45 +243,4 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
         return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), finalObjectArray, this.smsRowMapper);
     }
 
-    @Override
-    public SmsCountryData retrieveCountryCode(final Long officeId) {
-        try {
-            final String sql = "select " + this.smsCountryMapper.schema() + "where office_id = ?";
-
-            return this.jdbcTemplate.queryForObject(sql, this.smsCountryMapper, new Object[] {officeId});
-        } catch (final EmptyResultDataAccessException e) {
-            throw new SmsCountryCodeNotFoundException();
-        }
-    }
-
-    private static final class SmsCountryMapper implements RowMapper<SmsCountryData> {
-
-        final String schema;
-
-        public SmsCountryMapper() {
-            final StringBuilder sql = new StringBuilder(300);
-            sql.append("cc.id as id, ");
-            sql.append("cc.office_id as officeId, ");
-            sql.append("cc.country_name as countryName, ");
-            sql.append("cc.country_code as countryCode ");
-            sql.append("from m_office_country_mapping cc ");
-
-            this.schema = sql.toString();
-        }
-
-        public String schema() {
-            return this.schema;
-        }
-
-        @Override
-        public SmsCountryData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
-
-            final Long id = JdbcSupport.getLong(rs, "id");
-            final Long officeId = JdbcSupport.getLong(rs, "officeId");
-            final String countryName = rs.getString("countryName");
-            final String countryCode = rs.getString("countryCode");
-
-            return SmsCountryData.instance(id, officeId, countryName, countryCode);
-        }
-    }
 }

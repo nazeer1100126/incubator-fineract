@@ -43,8 +43,6 @@ import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageRepository;
-import org.apache.fineract.infrastructure.sms.scheduler.SmsMessageScheduledJobService;
-import org.apache.fineract.infrastructure.sms.service.SmsReadPlatformService;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
@@ -82,7 +80,6 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
     private final SmsCampaignRepository smsCampaignRepository;
     private final SmsCampaignValidator smsCampaignValidator;
-    private final SmsCampaignReadPlatformService smsCampaignReadPlatformService;
     private final ReportRepository reportRepository;
     private final SmsMessageRepository smsMessageRepository;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
@@ -90,21 +87,16 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
     private final ReadReportingService readReportingService;
     private final GenericDataService genericDataService;
     private final FromJsonHelper fromJsonHelper;
-    private final SmsReadPlatformService smsReadPlatformService;
-    
-    private final SmsMessageScheduledJobService serviceui;
 
     @Autowired
     public SmsCampaignWritePlatformServiceJpaImpl(final PlatformSecurityContext context, final SmsCampaignRepository smsCampaignRepository,
-            final SmsCampaignValidator smsCampaignValidator, final SmsCampaignReadPlatformService smsCampaignReadPlatformService,
-            final ReportRepository reportRepository, final SmsMessageRepository smsMessageRepository,
-            final ClientRepositoryWrapper clientRepositoryWrapper, final ReadReportingService readReportingService,
-            final GenericDataService genericDataService, final FromJsonHelper fromJsonHelper, final GroupRepository groupRepository, 
-            final SmsMessageScheduledJobService serviceui, final SmsReadPlatformService smsReadPlatformService) {
+            final SmsCampaignValidator smsCampaignValidator, final ReportRepository reportRepository,
+            final SmsMessageRepository smsMessageRepository, final ClientRepositoryWrapper clientRepositoryWrapper,
+            final ReadReportingService readReportingService, final GenericDataService genericDataService,
+            final FromJsonHelper fromJsonHelper, final GroupRepository groupRepository) {
         this.context = context;
         this.smsCampaignRepository = smsCampaignRepository;
         this.smsCampaignValidator = smsCampaignValidator;
-        this.smsCampaignReadPlatformService = smsCampaignReadPlatformService;
         this.reportRepository = reportRepository;
         this.smsMessageRepository = smsMessageRepository;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
@@ -112,8 +104,6 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
         this.genericDataService = genericDataService;
         this.fromJsonHelper = fromJsonHelper;
         this.groupRepository = groupRepository;
-        this.serviceui = serviceui;
-        this.smsReadPlatformService = smsReadPlatformService;
     }
 
     @Transactional
@@ -533,7 +523,9 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         final LocalDate reactivationDate = command.localDateValueOfParameterNamed("activationDate");
         smsCampaign.reactivate(currentUser, fmt, reactivationDate);
-        if (smsCampaign.isSchedule()) {
+        if (smsCampaign.isDirect()) {
+            insertDirectCampaignIntoSmsOutboundTable(smsCampaign);
+        } else if (smsCampaign.isSchedule()) {
 
             /**
              * if recurrence start date is in the future calculate next trigger
@@ -556,8 +548,8 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
             final LocalDateTime nextTriggerDateWithTime = LocalDateTime.parse(dateString, simpleDateFormat);
 
             smsCampaign.setNextTriggerDate(nextTriggerDateWithTime.toDate());
-            this.smsCampaignRepository.saveAndFlush(smsCampaign);
         }
+        this.smsCampaignRepository.saveAndFlush(smsCampaign);
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(smsCampaign.getId()) //

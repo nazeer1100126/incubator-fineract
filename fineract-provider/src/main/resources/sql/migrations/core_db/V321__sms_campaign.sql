@@ -157,17 +157,12 @@ CREATE TABLE `m_office_country_mapping` (
 );
 
 
-INSERT INTO `m_office_country_mapping` (`office_id`, `country_name`, `country_code`) VALUES ((SELECT id FROM m_office WHERE name = 'Head Office'), 'india', '91');
+INSERT INTO `c_external_service` (`name`) VALUES ('MESSAGE_GATEWAY');
 
+SET @EId = (SELECT `id` FROM `c_external_service` WHERE name = 'MESSAGE_GATEWAY');
 
-CREATE TABLE `m_intermediate_server_connections` (
-	`id` BIGINT(20) NOT NULL AUTO_INCREMENT,
-	`connection_name` VARCHAR(100) NOT NULL,
-	`host_name` VARCHAR(100) NOT NULL,
-	`url_end_point` VARCHAR(100) NOT NULL,
-	`port_number` INT(11) NULL DEFAULT NULL,
-	`username` VARCHAR(100) NULL DEFAULT NULL,
-	`password` VARCHAR(100) NULL DEFAULT NULL,
-	`ssl_enabled` TINYINT(1) NOT NULL DEFAULT '0',
-	PRIMARY KEY (`id`)
-);
+INSERT INTO `c_external_service_properties` (`name`, `value`, `external_service_id`) VALUES 
+('host_name', 'localhost', @EId), 
+('port_number', '9191', @EId), 
+('end_point', NULL, @EId), 
+('tenant_app_key', NULL, @EId);

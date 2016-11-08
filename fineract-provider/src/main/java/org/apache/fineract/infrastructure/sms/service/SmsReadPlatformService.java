@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
-import org.apache.fineract.infrastructure.sms.data.SmsCountryData;
 import org.apache.fineract.infrastructure.sms.data.SmsData;
 
 public interface SmsReadPlatformService {
@@ -44,8 +43,6 @@ public interface SmsReadPlatformService {
     Page<SmsData> retrieveSmsByStatus(final Long campaignId, SearchParameters searchParameters, Integer status, Date dateFrom, Date dateTo);
 
     List<Long> retrieveExternalIdsOfAllSent(Integer limit);
-
-    SmsCountryData retrieveCountryCode(Long officeId);
 
     Page<Long> retrieveAllWaitingForDeliveryReport(Integer limit);
 

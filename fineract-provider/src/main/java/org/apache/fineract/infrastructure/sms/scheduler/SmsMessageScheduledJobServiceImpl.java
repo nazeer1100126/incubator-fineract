@@ -224,7 +224,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                     headers.add(SmsCampaignConstants.FINERACT_TENANT_APP_KEY, messageGatewayConfigurationData.getTenantAppKey());
                     StringBuilder pathBuilder = new StringBuilder();
                     pathBuilder = (messageGatewayConfigurationData.getEndPoint() != null ? pathBuilder.append("{endPoint}/sms/report")
-                            : pathBuilder.append("report"));
+                            : pathBuilder.append("sms/report"));
                     UriBuilder builder = UriBuilder.fromPath(pathBuilder.toString()).host(messageGatewayConfigurationData.getHostName()).scheme("http")
                             .port(messageGatewayConfigurationData.getPortNumber());
 

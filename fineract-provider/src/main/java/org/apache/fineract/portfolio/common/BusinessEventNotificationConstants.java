@@ -70,4 +70,49 @@ public class BusinessEventNotificationConstants {
             return this.value;
         }
     }
+
+    public static enum SMS_BUSINESS_ENTITY {
+        LOAN("loan"), SAVINGS("savings"), CLIENTS("clients");
+
+        private final String value;
+
+        private SMS_BUSINESS_ENTITY(final String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
+
+    public static enum SMS_SUPPORTED_BUSINESS_EVENTS {
+        SAVINGS_ACTIVATE("savings_activated"), SAVINGS_ADJUST_TRANSACTION("savings_adjust_transaction"), SAVINGS_APPLY_FEE(
+                "savings_apply_fee"), SAVINGS_CALCULATE_INTEREST("savings_calculate_interest"), SAVINGS_CLOSE("savings_close"), SAVINGS_POST_INTEREST(
+                "savings_post_interest"), SAVINGS_REJECT("savings_reject"), SAVINGS_DEPOSIT("savings_deposit"), SAVINGS_WITHDRAWAL(
+                "savings_withdrawal"), CLIENTS_ACCEPT_TRANSFER("clients_accept_transfer"), CLIENTS_ACTIVATE("clients_activate"), CLIENTS_ASSIGN_STAFF(
+                "clients_assign_staff"), CLIENTS_CLOSE("clients_close"), CLIENTS_CREATE("clients_create"), CLIENTS_DELETE("clients_delete"), CLIENTS_PROPOSE_TRANSFER(
+                "clients_propose_transfer"), CLIENTS_REACTIVATE("clients_reactivate"), CLIENTS_REJECT("clients_reject"), CLIENTS_REJECT_TRANSFER(
+                "clients_reject_transfer"), CLIENTS_WITHDRAW("clients_withdraw"), CLIENTS_WITHDRAW_TRANSFER("clients_withdraw_transfer");
+
+        private final String value;
+
+        private SMS_SUPPORTED_BUSINESS_EVENTS(final String value) {
+            this.value = value;
+        }
+
+        private static final Set<String> values = new HashSet<>();
+        static {
+            for (final SMS_SUPPORTED_BUSINESS_EVENTS type : SMS_SUPPORTED_BUSINESS_EVENTS.values()) {
+                values.add(type.value);
+            }
+        }
+
+        public static Set<String> getAllValues() {
+            return values;
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
 }
