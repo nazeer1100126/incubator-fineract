@@ -40,7 +40,7 @@ public class SmsEvent {
     }
 
     @PostConstruct
-    public void registerListner() {
+    public void registerLoanListner() {
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_DISBURSAL, new SmsBusinessActionEvent(
                 CampaignTriggerSubType.DISBURSE));
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_MAKE_REPAYMENT, new SmsBusinessActionEvent(
@@ -53,6 +53,94 @@ public class SmsEvent {
                 CampaignTriggerSubType.WRITE_OFF));
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_UNDO_WRITTEN_OFF, new SmsBusinessActionEvent(
                 CampaignTriggerSubType.UNDO_WRITE_OFF));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_FORECLOSURE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.FORECLOSURE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_APPROVED, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.APPROVED));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_WAIVE_INTEREST, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.WAIVE_INTEREST));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_CLOSE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLOSE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_CLOSE_AS_RESCHEDULE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLOSE_AS_RESCHEDULE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_ADD_CHARGE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.ADD_CHARGE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_UPDATE_CHARGE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.UPDATE_CHARGE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_WAIVE_CHARGE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.WAIVE_CHARGE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_DELETE_CHARGE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.DELETE_CHARGE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_CHARGE_PAYMENT, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CHARGE_PAYMENT));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_INITIATE_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.INITIATE_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_ACCEPT_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.ACCEPT_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_WITHDRAW_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.WITHDRAW_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_REJECT_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.REJECT_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_REASSIGN_OFFICER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.REASSIGN_OFFICER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_REMOVE_OFFICER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.REMOVE_OFFICER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_APPLY_OVERDUE_CHARGE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.APPLY_OVERDUE_CHARGE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_INTEREST_RECALCULATION, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.INTEREST_RECALCULATION));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_REFUND, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.REFUND));
+    }
+
+    @PostConstruct
+    public void registerSavingListener() {
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_DEPOSIT, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_DEPOSIT));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_WITHDRAWAL));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_ACTIVATE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_ACTIVATE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_ADJUST_TRANSACTION,
+                new SmsBusinessActionEvent(CampaignTriggerSubType.SAVINGS_ADJUST_TRANSACTION));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_APPLY_FEE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_APPLY_FEE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_CALCULATE_INTEREST,
+                new SmsBusinessActionEvent(CampaignTriggerSubType.SAVINGS_CALCULATE_INTEREST));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_CLOSE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_CLOSE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_POST_INTEREST, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_POST_INTEREST));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.SAVINGS_REJECT, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.SAVINGS_REJECT));
+    }
+
+    @PostConstruct
+    public void registerClientListener() {
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_ACTIVATE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_ACTIVATE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_CLOSE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_CLOSE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_ACCEPT_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_ACCEPT_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_ASSIGN_STAFF,
+                new SmsBusinessActionEvent(CampaignTriggerSubType.CLIENTS_ASSIGN_STAFF));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_CREATE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_CREATE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_DELETE,
+                new SmsBusinessActionEvent(CampaignTriggerSubType.CLIENTS_DELETE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_PROPOSE_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_PROPOSE_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_REACTIVATE, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_REACTIVATE));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_REJECT, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_REJECT));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_REJECT_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_REJECT_TRANSFER));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_WITHDRAW, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_WITHDRAW));
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.CLIENTS_WITHDRAW_TRANSFER, new SmsBusinessActionEvent(
+                CampaignTriggerSubType.CLIENTS_WITHDRAW_TRANSFER));
     }
 
     public void genericMessageSender(final CampaignTriggerSubType actionType) {

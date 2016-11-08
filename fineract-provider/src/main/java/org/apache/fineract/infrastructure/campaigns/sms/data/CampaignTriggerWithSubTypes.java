@@ -11,8 +11,8 @@ public final class CampaignTriggerWithSubTypes {
     public enum ActualCampaignTriggerType {
         INVALID(0, "campaignTriggerType.invalid"), //
         LOAN(1, "campaignTriggerType.loan"), //
-        SAVINGS(2, "campaignTriggerType.savings"), //
-        CLIENTS(3, "campaignTriggerType.clients");
+        SAVING(2, "campaignTriggerType.saving"), //
+        CLIENT(3, "campaignTriggerType.client");
 
         private Integer value;
         private String code;
@@ -25,15 +25,14 @@ public final class CampaignTriggerWithSubTypes {
         public static ActualCampaignTriggerType fromInt(final Integer typeValue) {
             ActualCampaignTriggerType type = ActualCampaignTriggerType.INVALID;
             switch (typeValue) {
-                case 0:
                 case 1:
                     type = LOAN;
                 break;
                 case 2:
-                    type = SAVINGS;
+                    type = SAVING;
                 break;
                 case 3:
-                    type = CLIENTS;
+                    type = CLIENT;
                 break;
             }
             return type;
@@ -66,18 +65,55 @@ public final class CampaignTriggerWithSubTypes {
 
     public enum CampaignTriggerSubType {
         INVALID(0, ActualCampaignTriggerType.INVALID, "campaignTriggerSubType.invalid"), //
+
         DISBURSE(101, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.disburse"), //
         REPAYMENT(102, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.repayment"), //
         UNDO_DISBURSAL(103, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.undodisbursal"), //
         WRITE_OFF(104, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.writeoff"), //
         ADJUST(105, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.adjust"), //
         UNDO_WRITE_OFF(106, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.undowriteoff"), //
+        FORECLOSURE(107, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.foreclosure"), //
+        APPROVED(108, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.approved"), //
+        WAIVE_INTEREST(109, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.waive.interest"), //
+        CLOSE(110, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.close"), //
+        CLOSE_AS_RESCHEDULE(111, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.close.as.rescheduled"), //
+        ADD_CHARGE(112, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.add.charge"), //
+        UPDATE_CHARGE(113, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.update.charge"), //
+        WAIVE_CHARGE(114, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.waive.charge"), //
+        DELETE_CHARGE(115, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.delete.charge"), //
+        CHARGE_PAYMENT(116, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.charge.payment"), //
+        INITIATE_TRANSFER(117, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.initiate.transfer"), //
+        ACCEPT_TRANSFER(118, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.accept.transfer"), //
+        WITHDRAW_TRANSFER(119, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.withdraw.transfer"), //
+        REJECT_TRANSFER(120, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.reject.transfer"), //
+        REASSIGN_OFFICER(121, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.reassign.officer"), //
+        REMOVE_OFFICER(122, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.reassign.officer"), //
+        APPLY_OVERDUE_CHARGE(123, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.reassign.officer"), //
+        INTEREST_RECALCULATION(124, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.reassign.officer"), //
+        REFUND(125, ActualCampaignTriggerType.LOAN, "campaignTriggerSubType.reassign.officer"), //
 
-        DEPOSIT(201, ActualCampaignTriggerType.SAVINGS, "campaignTriggerSubType.deposit"), //
-        WITHDRAWAL(202, ActualCampaignTriggerType.SAVINGS, "campaignTriggerSubType.withdrawal"), //
+        SAVINGS_DEPOSIT(201, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.deposit"), //
+        SAVINGS_WITHDRAWAL(202, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.withdrawal"), //
+        SAVINGS_ACTIVATE(203, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.activate"), //
+        SAVINGS_ADJUST_TRANSACTION(204, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.adjust"), //
+        SAVINGS_APPLY_FEE(205, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.apply.fee"), //
+        SAVINGS_CALCULATE_INTEREST(206, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.calclulate.interest"), //
+        SAVINGS_CLOSE(207, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.close"), //
+        SAVINGS_POST_INTEREST(208, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.post"), //
+        SAVINGS_REJECT(209, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.reject"), //
 
-        ACTIVATE(301, ActualCampaignTriggerType.CLIENTS, "campaignTriggerSubType.activate"), //
-        CLOSE(302, ActualCampaignTriggerType.CLIENTS, "campaignTriggerSubType.close");
+        CLIENTS_ACTIVATE(301, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.activate"), //
+        CLIENTS_CLOSE(302, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.close"), //
+        CLIENTS_ACCEPT_TRANSFER(303, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.accept.transfer"), //
+        CLIENTS_ASSIGN_STAFF(304, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.assign.staff"), //
+        CLIENTS_CREATE(305, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.create"), //
+        CLIENTS_DELETE(306, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.delete"), //
+        CLIENTS_PROPOSE_TRANSFER(307, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.propose.transfer"), //
+        CLIENTS_REACTIVATE(308, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.reactivate"), //
+        CLIENTS_REJECT(309, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.reject"), //
+        CLIENTS_REJECT_TRANSFER(310, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.reject.transfer"), //
+        CLIENTS_WITHDRAW(311, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.withdraw"), //
+        CLIENTS_WITHDRAW_TRANSFER(312, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.withdraw.transfer");
 
         private Integer id;
         private ActualCampaignTriggerType type;
@@ -92,7 +128,6 @@ public final class CampaignTriggerWithSubTypes {
         public static CampaignTriggerSubType fromInt(final Integer subTypeValue) {
             CampaignTriggerSubType subType = CampaignTriggerSubType.INVALID;
             switch (subTypeValue) {
-                case 0:
                 case 101:
                     subType = DISBURSE;
                 break;
@@ -111,17 +146,70 @@ public final class CampaignTriggerWithSubTypes {
                 case 106:
                     subType = UNDO_WRITE_OFF;
                 break;
-                case 401:
-                    subType = DEPOSIT;
+
+                case 201:
+                    subType = SAVINGS_DEPOSIT;
                 break;
-                case 402:
-                    subType = WITHDRAWAL;
+                case 202:
+                    subType = SAVINGS_WITHDRAWAL;
                 break;
-                case 501:
-                    subType = ACTIVATE;
+                case 203:
+                    subType = SAVINGS_ACTIVATE;
                 break;
-                case 502:
-                    subType = CLOSE;
+                case 204:
+                    subType = SAVINGS_ADJUST_TRANSACTION;
+                break;
+                case 205:
+                    subType = SAVINGS_APPLY_FEE;
+                break;
+                case 206:
+                    subType = SAVINGS_CALCULATE_INTEREST;
+                break;
+                case 207:
+                    subType = SAVINGS_CLOSE;
+                break;
+                case 208:
+                    subType = SAVINGS_POST_INTEREST;
+                break;
+                case 209:
+                    subType = SAVINGS_REJECT;
+                break;
+
+                case 301:
+                    subType = CLIENTS_ACTIVATE;
+                break;
+                case 302:
+                    subType = CLIENTS_CLOSE;
+                break;
+                case 303:
+                    subType = CLIENTS_ACCEPT_TRANSFER;
+                break;
+                case 304:
+                    subType = CLIENTS_ASSIGN_STAFF;
+                break;
+                case 305:
+                    subType = CLIENTS_CREATE;
+                break;
+                case 306:
+                    subType = CLIENTS_DELETE;
+                break;
+                case 307:
+                    subType = CLIENTS_PROPOSE_TRANSFER;
+                break;
+                case 308:
+                    subType = CLIENTS_REACTIVATE;
+                break;
+                case 309:
+                    subType = CLIENTS_REJECT;
+                break;
+                case 310:
+                    subType = CLIENTS_REJECT_TRANSFER;
+                break;
+                case 311:
+                    subType = CLIENTS_WITHDRAW;
+                break;
+                case 312:
+                    subType = CLIENTS_WITHDRAW_TRANSFER;
                 break;
             }
             return subType;
