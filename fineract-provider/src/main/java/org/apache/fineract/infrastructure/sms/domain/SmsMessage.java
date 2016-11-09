@@ -91,6 +91,11 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
         return new SmsMessage(externalId, group, client, staff, SmsMessageStatusType.PENDING, message, mobileNo, smsCampaign);
     }
 
+    public static SmsMessage sentSms(final Long externalId, final Group group, final Client client, final Staff staff,
+            final String message, final String mobileNo, final SmsCampaign smsCampaign) {
+        return new SmsMessage(externalId, group, client, staff, SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT, message, mobileNo, smsCampaign);
+    }
+
     public static SmsMessage instance(Long externalId, final Group group, final Client client, final Staff staff,
             final SmsMessageStatusType statusType, final String message, final String mobileNo, final SmsCampaign smsCampaign) {
 

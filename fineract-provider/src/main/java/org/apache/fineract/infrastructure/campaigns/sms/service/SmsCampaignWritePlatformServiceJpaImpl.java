@@ -112,9 +112,16 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
         final AppUser currentUser = this.context.authenticatedUser();
         this.smsCampaignValidator.validateCreate(command.json());
-        final Long runReportId = command.longValueOfParameterNamed(SmsCampaignValidator.runReportId);
-        final Report report = this.reportRepository.findOne(runReportId);
-        if (report == null) { throw new ReportNotFoundException(runReportId); }
+        final JsonElement element = this.fromJsonHelper.parse(command.json());
+        final Long triggerType = this.fromJsonHelper.extractLongNamed(SmsCampaignValidator.triggerType, element);
+        Report report = null;
+        if (triggerType.equals(SmsCampaignTriggerType.TRIGGERED.getValue())) {
+            final Long runReportId = command.longValueOfParameterNamed(SmsCampaignValidator.runReportId);
+            if (runReportId != null) {
+                report = this.reportRepository.findOne(runReportId);
+                if (report == null) { throw new ReportNotFoundException(runReportId); }
+            }
+        }
         SmsCampaign smsCampaign = SmsCampaign.instance(currentUser, report, command);
 
         this.smsCampaignRepository.save(smsCampaign);
@@ -218,39 +225,39 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
     @Transactional
     @Override
     public void insertTriggeredCampaignIntoSmsOutboundTable(final Map<SmsCampaign, Collection<SmsMessage>> smsDataMap,
-            final SmsCampaign smsCampaign) {
-        try {
-            Collection<SmsMessage> smsMessages = new ArrayList<>();
-            HashMap<String, String> campaignParams = new ObjectMapper().readValue(smsCampaign.getParamValue(),
-                    new TypeReference<HashMap<String, String>>() {});
+            final SmsCampaign smsCampaign, final Client client) {
+        Collection<SmsMessage> smsMessages = new ArrayList<>();
+        // HashMap<String, String> campaignParams = new
+        // ObjectMapper().readValue(smsCampaign.getParamValue(),
+        // new TypeReference<HashMap<String, String>>() {});
+        //
+        // HashMap<String, String> queryParamForRunReport = new
+        // ObjectMapper().readValue(smsCampaign.getParamValue(),
+        // new TypeReference<HashMap<String, String>>() {});
+        //
+        // List<HashMap<String, Object>> runReportObject =
+        // this.getRunReportByServiceImpl(campaignParams.get("reportName"),
+        // queryParamForRunReport);
 
-            HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(smsCampaign.getParamValue(),
-                    new TypeReference<HashMap<String, String>>() {});
+        // if (runReportObject != null) {
+        // for (HashMap<String, Object> entry : runReportObject) {
+        // String textMessage =
+        // this.compileSmsTemplate(smsCampaign.getMessage(),
+        // smsCampaign.getCampaignName(), entry);
+        // Integer clientId = (Integer) entry.get("id");
+        // Object mobileNo = entry.get("mobileNo");
 
-            List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(campaignParams.get("reportName"),
-                    queryParamForRunReport);
-
-            if (runReportObject != null) {
-                for (HashMap<String, Object> entry : runReportObject) {
-                    String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), entry);
-                    Integer clientId = (Integer) entry.get("id");
-                    Object mobileNo = entry.get("mobileNo");
-
-                    Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId.longValue());
-                    if (mobileNo != null) {
-//                        String countryCode = this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
-                        SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, 
-                        mobileNo.toString(), smsCampaign);
-                        smsMessages.add(smsMessage);
-                        this.smsMessageRepository.save(smsMessage);
-                    }
-                }
-                smsDataMap.put(smsCampaign, smsMessages);
-            }
-        } catch (final IOException e) {
-            // TODO throw something here
-            System.out.println(e.getMessage());
+        if (client != null && client.mobileNo() != null) {
+            // String countryCode =
+            // this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
+            SmsMessage smsMessage = SmsMessage.sentSms(null, null, client, null, smsCampaign.getMessage(), client.mobileNo().toString(),
+                    smsCampaign);
+            smsMessages.add(smsMessage);
+            this.smsMessageRepository.save(smsMessage);
         }
+        // }
+        smsDataMap.put(smsCampaign, smsMessages);
+        // }
     }
 
     @Override

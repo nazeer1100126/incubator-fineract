@@ -93,7 +93,10 @@ public class SmsCampaignValidator {
         final Long campaignType = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.campaignType, element);
         baseDataValidator.reset().parameter(SmsCampaignValidator.campaignType).value(campaignType).notNull().integerGreaterThanZero();
 
-        if (campaignType.intValue() == SmsCampaignTriggerType.SCHEDULE.getValue()) {
+        final Long triggerType = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.triggerType, element);
+        baseDataValidator.reset().parameter(SmsCampaignValidator.triggerType).value(triggerType).notNull().integerGreaterThanZero();
+
+        if (triggerType.intValue() == SmsCampaignTriggerType.SCHEDULE.getValue()) {
 
             final Integer frequencyParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(SmsCampaignValidator.frequencyParamName,
                     element);
@@ -110,7 +113,7 @@ public class SmsCampaignValidator {
             }
             final String recurrenceStartDate = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.recurrenceStartDate, element);
             baseDataValidator.reset().parameter(SmsCampaignValidator.recurrenceStartDate).value(recurrenceStartDate).notBlank();
-        } else if (campaignType.intValue() == SmsCampaignTriggerType.TRIGGERED.getValue()) {
+        } else if (triggerType.intValue() == SmsCampaignTriggerType.TRIGGERED.getValue()) {
             final Integer triggerEntityTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerEntityType, element);
             baseDataValidator.reset().parameter(triggerEntityType).value(triggerEntityTypeParam).notNull().integerGreaterThanZero();
 
@@ -119,17 +122,21 @@ public class SmsCampaignValidator {
         }
 
         final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);
-        baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
-
+        if(triggerType.intValue() != SmsCampaignTriggerType.TRIGGERED.getValue()) {
+            baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
+        }
+        
         final String message = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.message, element);
         baseDataValidator.reset().parameter(SmsCampaignValidator.message).value(message).notBlank().notExceedingLengthOf(480);
 
         final JsonElement paramValueJsonObject = this.fromApiJsonHelper.extractJsonObjectNamed(SmsCampaignValidator.paramValue, element);
-        baseDataValidator.reset().parameter(SmsCampaignValidator.paramValue).value(paramValueJsonObject).notBlank();
-        if (!paramValueJsonObject.isJsonNull() && paramValueJsonObject.isJsonObject()) {
-            for (Map.Entry<String, JsonElement> entry : paramValueJsonObject.getAsJsonObject().entrySet()) {
-                final JsonElement inner = entry.getValue();
-                baseDataValidator.reset().parameter(entry.getKey()).value(inner).notBlank();
+        if (triggerType.intValue() != SmsCampaignTriggerType.TRIGGERED.getValue()) {
+            baseDataValidator.reset().parameter(SmsCampaignValidator.paramValue).value(paramValueJsonObject).notBlank();
+            if (paramValueJsonObject != null && paramValueJsonObject.isJsonObject()) {
+                for (Map.Entry<String, JsonElement> entry : paramValueJsonObject.getAsJsonObject().entrySet()) {
+                    final JsonElement inner = entry.getValue();
+                    baseDataValidator.reset().parameter(entry.getKey()).value(inner).notBlank();
+                }
             }
         }
 
@@ -159,32 +166,44 @@ public class SmsCampaignValidator {
         final Long campaignType = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.campaignType, element);
         baseDataValidator.reset().parameter(SmsCampaignValidator.campaignType).value(campaignType).notNull().integerGreaterThanZero();
 
-        if (campaignType.intValue() == SmsCampaignTriggerType.SCHEDULE.getValue()) {
+        final Long triggerType = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.triggerType, element);
+        baseDataValidator.reset().parameter(SmsCampaignValidator.triggerType).value(triggerType).notNull().integerGreaterThanZero();
+
+        if (triggerType.intValue() == SmsCampaignTriggerType.SCHEDULE.getValue()) {
             final String recurrenceParamName = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.recurrenceParamName, element);
             baseDataValidator.reset().parameter(SmsCampaignValidator.recurrenceParamName).value(recurrenceParamName).notBlank();
 
             final String recurrenceStartDate = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.recurrenceStartDate, element);
             baseDataValidator.reset().parameter(SmsCampaignValidator.recurrenceStartDate).value(recurrenceStartDate).notBlank();
-        } else if (campaignType.intValue() == SmsCampaignTriggerType.TRIGGERED.getValue()) {
-            final Integer triggerEntityTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerEntityType, element);
-            baseDataValidator.reset().parameter(triggerEntityType).value(triggerEntityTypeParam).notNull().integerGreaterThanZero();
-
-            final Integer triggerActionTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerActionType, element);
-            baseDataValidator.reset().parameter(triggerActionType).value(triggerActionTypeParam).notNull().integerGreaterThanZero();
+        } else if (triggerType.intValue() == SmsCampaignTriggerType.TRIGGERED.getValue()) {
+            if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.triggerEntityType, element)) {
+                final Integer triggerEntityTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerEntityType, element);
+                baseDataValidator.reset().parameter(triggerEntityType).value(triggerEntityTypeParam).notNull().integerGreaterThanZero();
+            }
+            if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.triggerActionType, element)) {
+                final Integer triggerActionTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerActionType, element);
+                baseDataValidator.reset().parameter(triggerActionType).value(triggerActionTypeParam).notNull().integerGreaterThanZero();
+            }
         }
 
-        final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);
-        baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
+        if(this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.runReportId, element)) {
+            final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);
+            if(triggerType.intValue() != SmsCampaignTriggerType.TRIGGERED.getValue()) {
+                baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
+            }
+        }
 
         final String message = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.message, element);
         baseDataValidator.reset().parameter(SmsCampaignValidator.message).value(message).notBlank().notExceedingLengthOf(480);
 
         final JsonElement paramValueJsonObject = this.fromApiJsonHelper.extractJsonObjectNamed(SmsCampaignValidator.paramValue, element);
-        baseDataValidator.reset().parameter(SmsCampaignValidator.paramValue).value(paramValueJsonObject).notBlank();
-        if (!paramValueJsonObject.isJsonNull() && paramValueJsonObject.isJsonObject()) {
-            for (Map.Entry<String, JsonElement> entry : paramValueJsonObject.getAsJsonObject().entrySet()) {
-                final JsonElement inner = entry.getValue();
-                baseDataValidator.reset().parameter(entry.getKey()).value(inner).notBlank();
+        if (triggerType.intValue() != SmsCampaignTriggerType.TRIGGERED.getValue()) {
+            baseDataValidator.reset().parameter(SmsCampaignValidator.paramValue).value(paramValueJsonObject).notBlank();
+            if (paramValueJsonObject != null && paramValueJsonObject.isJsonObject()) {
+                for (Map.Entry<String, JsonElement> entry : paramValueJsonObject.getAsJsonObject().entrySet()) {
+                    final JsonElement inner = entry.getValue();
+                    baseDataValidator.reset().parameter(entry.getKey()).value(inner).notBlank();
+                }
             }
         }
 

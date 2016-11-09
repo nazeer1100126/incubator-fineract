@@ -14,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +39,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 @Entity
-@Table(name = "sms_campaign")
+@Table(name = "sms_campaign", uniqueConstraints = {@UniqueConstraint(columnNames = { "campaign_name" }, name = "campaign_name_UNIQUE")})
 public class SmsCampaign extends AbstractPersistableCustom<Long> {
 
     @Column(name = "campaign_name", nullable = false)
@@ -60,7 +61,7 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
     private Long providerId; // defined provider details
 
     @ManyToOne
-    @JoinColumn(name = "report_id", nullable = false)
+    @JoinColumn(name = "report_id", nullable = true)
     private Report businessRuleId;
 
     @Column(name = "param_value")

@@ -704,5 +704,9 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     public void updateAmount(final Money amount) {
         this.amount = amount.getAmount();
     }
+    
+    public SavingsAccount getSavingsAccount() {
+        return this.savingsAccount ;
+    }
 
 }

@@ -96,11 +96,15 @@ public final class CampaignTriggerWithSubTypes {
         SAVINGS_WITHDRAWAL(202, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.withdrawal"), //
         SAVINGS_ACTIVATE(203, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.activate"), //
         SAVINGS_ADJUST_TRANSACTION(204, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.adjust"), //
-        SAVINGS_APPLY_FEE(205, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.apply.fee"), //
+        SAVINGS_APPLY_ANNUAL_FEE(205, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.apply.annual.fee"), //
         SAVINGS_CALCULATE_INTEREST(206, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.calclulate.interest"), //
         SAVINGS_CLOSE(207, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.close"), //
         SAVINGS_POST_INTEREST(208, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.post"), //
         SAVINGS_REJECT(209, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.reject"), //
+        SAVINGS_UNDO(210, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.undo"), //
+        SAVINGS_ADD_CHARGE(211, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.add.charge"), //
+        SAVINGS_WAIVE_CHARGE(212, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.waive.charge"), //
+        SAVINGS_PAY_CHARGE(213, ActualCampaignTriggerType.SAVING, "campaignTriggerSubType.savings.pay.charge"), //
 
         CLIENTS_ACTIVATE(301, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.activate"), //
         CLIENTS_CLOSE(302, ActualCampaignTriggerType.CLIENT, "campaignTriggerSubType.close"), //
@@ -160,7 +164,7 @@ public final class CampaignTriggerWithSubTypes {
                     subType = SAVINGS_ADJUST_TRANSACTION;
                 break;
                 case 205:
-                    subType = SAVINGS_APPLY_FEE;
+                    subType = SAVINGS_APPLY_ANNUAL_FEE;
                 break;
                 case 206:
                     subType = SAVINGS_CALCULATE_INTEREST;
@@ -173,6 +177,18 @@ public final class CampaignTriggerWithSubTypes {
                 break;
                 case 209:
                     subType = SAVINGS_REJECT;
+                break;
+                case 210:
+                    subType = SAVINGS_UNDO;
+                break;
+                case 211:
+                    subType = SAVINGS_ADD_CHARGE;
+                break;
+                case 212:
+                    subType = SAVINGS_WAIVE_CHARGE;
+                break;
+                case 213:
+                    subType = SAVINGS_PAY_CHARGE;
                 break;
 
                 case 301:

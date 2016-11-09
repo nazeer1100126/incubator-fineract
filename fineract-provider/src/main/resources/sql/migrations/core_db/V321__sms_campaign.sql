@@ -3,7 +3,7 @@ CREATE TABLE `sms_campaign` (
 	`campaign_name` VARCHAR(100) NOT NULL,
 	`campaign_type` INT(11) NOT NULL,
 	`campaign_trigger_type` INT(11) NOT NULL,
-	`report_id` INT(11) NOT NULL,
+	`report_id` INT(11) NULL DEFAULT NULL,
 	`provider_id` BIGINT(20) NOT NULL,
 	`trigger_entity_type` INT(11) NULL DEFAULT NULL,
 	`trigger_action_type` INT(11) NULL DEFAULT NULL,

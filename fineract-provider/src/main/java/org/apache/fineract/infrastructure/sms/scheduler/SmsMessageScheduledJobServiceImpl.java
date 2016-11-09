@@ -60,8 +60,10 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     private static final Logger logger = LoggerFactory.getLogger(SmsMessageScheduledJobServiceImpl.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private final ExternalServicesPropertiesReadPlatformService propertiesReadPlatformService;
-    private  ExecutorService executorService ;
-
+    private  ExecutorService genericExecutorService ;
+    private ExecutorService triggeredExecutorService ;
+    
+    
     /**
      * SmsMessageScheduledJobServiceImpl constructor
      **/
@@ -75,7 +77,8 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 
     @PostConstruct
     public void initializeExecutorService() {
-        executorService = Executors.newSingleThreadExecutor();
+        genericExecutorService = Executors.newSingleThreadExecutor();
+        triggeredExecutorService = Executors.newSingleThreadExecutor() ;
     }
 
     /**
@@ -111,7 +114,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                     }
                     this.smsMessageRepository.save(toSaveMessages);
                     this.smsMessageRepository.flush();
-                    this.executorService.execute(new SmsTask(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas));
+                    this.genericExecutorService.execute(new SmsTask(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas));
 
 //                    new MyThread(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas).start();
                 }
@@ -141,7 +144,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 
         @Override
         public void onApplicationEvent(@SuppressWarnings("unused") ContextClosedEvent event) {
-            executorService.shutdown();
+            genericExecutorService.shutdown();
             logger.info("Shutting down the ExecutorService");
         }
     }
@@ -191,6 +194,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                     }
                     request.append(SmsMessageApiQueueResourceData.toJsonString(apiQueueResourceDatas));
                     logger.info("Sending triggered SMS with request - " + request.toString());
+                    this.triggeredExecutorService.execute(new SmsTask(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas));
                 }
             }
         } catch (Exception e) {
