@@ -269,31 +269,25 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
             HashMap<String, String> campaignParams = new ObjectMapper().readValue(smsCampaign.getParamValue(),
                     new TypeReference<HashMap<String, String>>() {});
-            campaignParams.put("${loanId}", loan.getId().toString());
-
+            campaignParams.put("loanId", loan.getId().toString());
+            
             HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(smsCampaign.getParamValue(),
                     new TypeReference<HashMap<String, String>>() {});
-            queryParamForRunReport.put("${loanId}", loan.getId().toString());
+            queryParamForRunReport.put("loanId", loan.getId().toString());
 
             if (loan.isGroupLoan()) {
                 Group group = this.groupRepository.findOne(loan.getGroupId());
                 clientSet.addAll(group.getClientMembers());
-                campaignParams.put("${groupId}", group.getId().toString());
-                queryParamForRunReport.put("${groupId}", group.getId().toString());
+                queryParamForRunReport.put("groupId", group.getId().toString());
             } else {
                 Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(loan.getClientId());
                 clientSet.add(client);
-                campaignParams.put("${groupId}", "-1");
             }
-            
-            campaignParams.put("${staffId}", "-1");
-            campaignParams.put("${loanType}", "-1");
-            campaignParams.put("${officeId}", "1");
-            
-            for (Client client : clientSet) {
-                campaignParams.put("${clientId}", client.getId().toString());
-                queryParamForRunReport.put("${clientId}", client.getId().toString());
 
+            for (Client client : clientSet) {
+                campaignParams.put("clientId", client.getId().toString());
+                queryParamForRunReport.put("clientId", client.getId().toString());
+                
                 List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(campaignParams.get("reportName"),
                         queryParamForRunReport);
 
@@ -301,10 +295,12 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
                     for (HashMap<String, Object> entry : runReportObject) {
                         String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), entry);
                         Object mobileNo = entry.get("mobileNo");
-
+                        
                         if (mobileNo != null) {
                             SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, mobileNo.toString(),
                                     smsCampaign);
+                            insertTriggeredCampaignIntoSmsOutboundTable(smsDataMap, smsCampaign);
+                            sendTriggeredMessages(smsDataMap);
                             this.smsMessageRepository.save(smsMessage);
                         }
                     }
