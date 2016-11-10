@@ -13,6 +13,8 @@ public interface SmsCampaignRepository extends JpaRepository<SmsCampaign, Long>,
     Collection<SmsCampaign> findByCampaignTypeAndTriggerTypeAndStatus(final Integer campaignType, final Integer triggerType,
             final Integer status);
 
+    Collection<SmsCampaign> findByTriggerType(final Integer triggerType) ;
+    
     Collection<SmsCampaign> findByTriggerTypeAndTriggerActionTypeAndStatus(final Integer triggerType, final Integer triggerActionType,
             final Integer status);
 }

@@ -6414,4 +6414,6 @@ public class Loan extends AbstractPersistableCustom<Long> {
     public boolean hasInvalidLoanType() {
         return AccountType.fromInt(this.loanType).isInvalid();
     }
+    
+    public boolean isIndividualLoan(){return AccountType.fromInt(this.loanType).isIndividualAccount();}
 }

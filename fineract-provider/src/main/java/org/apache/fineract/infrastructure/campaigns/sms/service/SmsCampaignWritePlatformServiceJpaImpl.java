@@ -283,8 +283,13 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
             } else {
                 Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(loan.getClientId());
                 clientSet.add(client);
+                campaignParams.put("${groupId}", "-1");
             }
-
+            
+            campaignParams.put("${staffId}", "-1");
+            campaignParams.put("${loanType}", "-1");
+            campaignParams.put("${officeId}", "1");
+            
             for (Client client : clientSet) {
                 campaignParams.put("${clientId}", client.getId().toString());
                 queryParamForRunReport.put("${clientId}", client.getId().toString());

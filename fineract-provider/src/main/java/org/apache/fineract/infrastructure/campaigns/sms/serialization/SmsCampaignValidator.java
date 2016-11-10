@@ -122,9 +122,7 @@ public class SmsCampaignValidator {
         }
 
         final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);
-        if(triggerType.intValue() != SmsCampaignTriggerType.TRIGGERED.getValue()) {
-            baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
-        }
+        baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
         
         final String message = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.message, element);
         baseDataValidator.reset().parameter(SmsCampaignValidator.message).value(message).notBlank().notExceedingLengthOf(480);
@@ -188,9 +186,7 @@ public class SmsCampaignValidator {
 
         if(this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.runReportId, element)) {
             final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);
-            if(triggerType.intValue() != SmsCampaignTriggerType.TRIGGERED.getValue()) {
-                baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
-            }
+            baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
         }
 
         final String message = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.message, element);
