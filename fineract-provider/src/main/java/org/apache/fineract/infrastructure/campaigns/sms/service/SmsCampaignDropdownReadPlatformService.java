@@ -39,4 +39,5 @@ public interface SmsCampaignDropdownReadPlatformService {
     Collection<EnumOptionData> retrivePeriodFrequencyTypes();
 
     Collection<TriggerTypeWithSubTypesData> getTriggerTypeAndSubTypes();
+    
 }

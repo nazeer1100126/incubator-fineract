@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.infrastructure.campaigns.sms.service;
 
-import java.util.Collection;
 import java.util.Map;
 
 import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignPreviewData;
@@ -27,7 +26,6 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.api.JsonQuery;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
-import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
@@ -54,9 +52,6 @@ public interface SmsCampaignWritePlatformService {
 
     public void storeTemplateMessageIntoSmsOutBoundTable() throws JobExecutionException;
 
-    void insertTriggeredCampaignIntoSmsOutboundTable(Map<SmsCampaign, Collection<SmsMessage>> smsDataMap, SmsCampaign smsCampaign,
-            Client client);
-    
     public void insertDirectCampaignIntoSmsOutboundTable(final Client client, final SmsCampaign smsCampaign) ;
     
     public void insertDirectCampaignIntoSmsOutboundTable(final SavingsAccount savingsAccount, final SmsCampaign smsCampaign) ;

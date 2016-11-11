@@ -240,48 +240,6 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
     }
 
-    @Transactional
-    @Override
-	public void insertTriggeredCampaignIntoSmsOutboundTable(final Map<SmsCampaign, Collection<SmsMessage>> smsDataMap,
-			final SmsCampaign smsCampaign, final Client client) {
-		Collection<SmsMessage> smsMessages = new ArrayList<>();
-		
-		/*HashMap<String, String> campaignParams;
-		try {
-			campaignParams = new ObjectMapper().readValue(smsCampaign.getParamValue(),
-					new TypeReference<HashMap<String, String>>() {
-					});
-			HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(smsCampaign.getParamValue(),
-					new TypeReference<HashMap<String, String>>() {
-					});
-
-			List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(campaignParams.get("reportName"),
-					queryParamForRunReport);
-
-			if (runReportObject != null) {
-				for (HashMap<String, Object> entry : runReportObject) {
-					String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(),
-							entry);
-					Integer clientId = (Integer) entry.get("id");
-					Object mobileNo = entry.get("mobileNo");
-
-					if (client != null && client.mobileNo() != null) {
-						SmsMessage smsMessage = SmsMessage.sentSms(null, null, client, null, textMessage,
-								client.mobileNo().toString(), smsCampaign);
-						smsMessages.add(smsMessage);
-						this.smsMessageRepository.save(smsMessage);
-					}
-				}
-				smsDataMap.put(smsCampaign, smsMessages);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-*/
-		
-	}
-
     @Override
     public void insertDirectCampaignIntoSmsOutboundTable(final Loan loan, final SmsCampaign smsCampaign) {
         try {
@@ -690,7 +648,7 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
         }
     }
 
-    private void handleDataIntegrityIssues(@SuppressWarnings("unused") final JsonCommand command, final DataIntegrityViolationException dve) {
+    private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
         final Throwable realCause = dve.getMostSpecificCause();
 
         throw new PlatformDataIntegrityException("error.msg.sms.campaign.unknown.data.integrity.issue",
