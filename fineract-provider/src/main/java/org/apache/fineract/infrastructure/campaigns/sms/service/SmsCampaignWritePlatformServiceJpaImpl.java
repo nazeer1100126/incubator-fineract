@@ -43,6 +43,8 @@ import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessageRepository;
+import org.apache.fineract.infrastructure.sms.domain.SmsMessageStatusType;
+import org.apache.fineract.infrastructure.sms.scheduler.SmsMessageScheduledJobService;
 import org.apache.fineract.portfolio.calendar.service.CalendarUtils;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
@@ -50,6 +52,7 @@ import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.group.domain.GroupRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidLoanTypeException;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -88,12 +91,15 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
     private final GenericDataService genericDataService;
     private final FromJsonHelper fromJsonHelper;
 
+    private final SmsMessageScheduledJobService smsMessageScheduledJobService;
+    
     @Autowired
     public SmsCampaignWritePlatformServiceJpaImpl(final PlatformSecurityContext context, final SmsCampaignRepository smsCampaignRepository,
             final SmsCampaignValidator smsCampaignValidator, final ReportRepository reportRepository,
             final SmsMessageRepository smsMessageRepository, final ClientRepositoryWrapper clientRepositoryWrapper,
             final ReadReportingService readReportingService, final GenericDataService genericDataService,
-            final FromJsonHelper fromJsonHelper, final GroupRepository groupRepository) {
+            final FromJsonHelper fromJsonHelper, final GroupRepository groupRepository,
+            final SmsMessageScheduledJobService smsMessageScheduledJobService) {
         this.context = context;
         this.smsCampaignRepository = smsCampaignRepository;
         this.smsCampaignValidator = smsCampaignValidator;
@@ -104,6 +110,7 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
         this.genericDataService = genericDataService;
         this.fromJsonHelper = fromJsonHelper;
         this.groupRepository = groupRepository;
+        this.smsMessageScheduledJobService = smsMessageScheduledJobService ;
     }
 
     @Transactional
@@ -112,16 +119,9 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
         final AppUser currentUser = this.context.authenticatedUser();
         this.smsCampaignValidator.validateCreate(command.json());
-        final JsonElement element = this.fromJsonHelper.parse(command.json());
-        final Long triggerType = this.fromJsonHelper.extractLongNamed(SmsCampaignValidator.triggerType, element);
-        Report report = null;
-        if (triggerType.equals(SmsCampaignTriggerType.TRIGGERED.getValue())) {
-            final Long runReportId = command.longValueOfParameterNamed(SmsCampaignValidator.runReportId);
-            if (runReportId != null) {
-                report = this.reportRepository.findOne(runReportId);
-                if (report == null) { throw new ReportNotFoundException(runReportId); }
-            }
-        }
+        final Long runReportId = command.longValueOfParameterNamed(SmsCampaignValidator.runReportId);
+        Report report = this.reportRepository.findOne(runReportId);
+        if (report == null) { throw new ReportNotFoundException(runReportId); }
         SmsCampaign smsCampaign = SmsCampaign.instance(currentUser, report, command);
 
         this.smsCampaignRepository.save(smsCampaign);
@@ -224,41 +224,45 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
 
     @Transactional
     @Override
-    public void insertTriggeredCampaignIntoSmsOutboundTable(final Map<SmsCampaign, Collection<SmsMessage>> smsDataMap,
-            final SmsCampaign smsCampaign, final Client client) {
-        Collection<SmsMessage> smsMessages = new ArrayList<>();
-        // HashMap<String, String> campaignParams = new
-        // ObjectMapper().readValue(smsCampaign.getParamValue(),
-        // new TypeReference<HashMap<String, String>>() {});
-        //
-        // HashMap<String, String> queryParamForRunReport = new
-        // ObjectMapper().readValue(smsCampaign.getParamValue(),
-        // new TypeReference<HashMap<String, String>>() {});
-        //
-        // List<HashMap<String, Object>> runReportObject =
-        // this.getRunReportByServiceImpl(campaignParams.get("reportName"),
-        // queryParamForRunReport);
+	public void insertTriggeredCampaignIntoSmsOutboundTable(final Map<SmsCampaign, Collection<SmsMessage>> smsDataMap,
+			final SmsCampaign smsCampaign, final Client client) {
+		Collection<SmsMessage> smsMessages = new ArrayList<>();
+		
+		/*HashMap<String, String> campaignParams;
+		try {
+			campaignParams = new ObjectMapper().readValue(smsCampaign.getParamValue(),
+					new TypeReference<HashMap<String, String>>() {
+					});
+			HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(smsCampaign.getParamValue(),
+					new TypeReference<HashMap<String, String>>() {
+					});
 
-        // if (runReportObject != null) {
-        // for (HashMap<String, Object> entry : runReportObject) {
-        // String textMessage =
-        // this.compileSmsTemplate(smsCampaign.getMessage(),
-        // smsCampaign.getCampaignName(), entry);
-        // Integer clientId = (Integer) entry.get("id");
-        // Object mobileNo = entry.get("mobileNo");
+			List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(campaignParams.get("reportName"),
+					queryParamForRunReport);
 
-        if (client != null && client.mobileNo() != null) {
-            // String countryCode =
-            // this.smsReadPlatformService.retrieveCountryCode(client.getOffice().getId()).getCountryCode();
-            SmsMessage smsMessage = SmsMessage.sentSms(null, null, client, null, smsCampaign.getMessage(), client.mobileNo().toString(),
-                    smsCampaign);
-            smsMessages.add(smsMessage);
-            this.smsMessageRepository.save(smsMessage);
-        }
-        // }
-        smsDataMap.put(smsCampaign, smsMessages);
-        // }
-    }
+			if (runReportObject != null) {
+				for (HashMap<String, Object> entry : runReportObject) {
+					String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(),
+							entry);
+					Integer clientId = (Integer) entry.get("id");
+					Object mobileNo = entry.get("mobileNo");
+
+					if (client != null && client.mobileNo() != null) {
+						SmsMessage smsMessage = SmsMessage.sentSms(null, null, client, null, textMessage,
+								client.mobileNo().toString(), smsCampaign);
+						smsMessages.add(smsMessage);
+						this.smsMessageRepository.save(smsMessage);
+					}
+				}
+				smsDataMap.put(smsCampaign, smsMessages);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+*/
+		
+	}
 
     @Override
     public void insertDirectCampaignIntoSmsOutboundTable(final Loan loan, final SmsCampaign smsCampaign) {
@@ -299,21 +303,105 @@ public class SmsCampaignWritePlatformServiceJpaImpl implements SmsCampaignWriteP
                         if (mobileNo != null) {
                             SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage, mobileNo.toString(),
                                     smsCampaign);
-                            insertTriggeredCampaignIntoSmsOutboundTable(smsDataMap, smsCampaign);
-                            sendTriggeredMessages(smsDataMap);
+                            smsMessage.setStatusType(SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue());
                             this.smsMessageRepository.save(smsMessage);
+                            Collection<SmsMessage> messages = new ArrayList<>() ;
+                            messages.add(smsMessage) ;
+                            Map<SmsCampaign, Collection<SmsMessage>> smsDataMap = new HashMap<>() ;
+                            smsDataMap.put(smsCampaign, messages) ;
+                             this.smsMessageScheduledJobService.sendTriggeredMessages(smsDataMap);
                         }
                     }
                 }
             }
         } catch (final IOException e) {
             System.out.println("IOException: " + e.getMessage());
-            // TODO throw something here
         } catch (final RuntimeException e) {
             System.out.println("RuntimeException: " + e.getMessage());
         }
     }
 
+    @Override
+    public void insertDirectCampaignIntoSmsOutboundTable(final Client client, final SmsCampaign smsCampaign) {
+        try {
+            HashMap<String, String> campaignParams = new ObjectMapper().readValue(smsCampaign.getParamValue(),
+                    new TypeReference<HashMap<String, String>>() {});
+            campaignParams.put("clientId", client.getId().toString());
+            HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(smsCampaign.getParamValue(),
+                    new TypeReference<HashMap<String, String>>() {});
+            
+			campaignParams.put("clientId", client.getId().toString());
+			queryParamForRunReport.put("clientId", client.getId().toString());
+			
+			List<HashMap<String, Object>> runReportObject = this
+					.getRunReportByServiceImpl(campaignParams.get("reportName"), queryParamForRunReport);
+
+			if (runReportObject != null && runReportObject.size() > 0) {
+				for (HashMap<String, Object> entry : runReportObject) {
+					String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(),
+							smsCampaign.getCampaignName(), entry);
+					Object mobileNo = entry.get("mobileNo");
+
+					if (mobileNo != null) {
+						SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage,
+								mobileNo.toString(), smsCampaign);
+						smsMessage.setStatusType(SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue());
+						this.smsMessageRepository.save(smsMessage);
+						Collection<SmsMessage> messages = new ArrayList<>();
+						messages.add(smsMessage);
+						Map<SmsCampaign, Collection<SmsMessage>> smsDataMap = new HashMap<>();
+						smsDataMap.put(smsCampaign, messages);
+						this.smsMessageScheduledJobService.sendTriggeredMessages(smsDataMap);
+					}
+				}
+			}
+        } catch (final IOException e) {
+            System.out.println("IOException: " + e.getMessage());
+        } catch (final RuntimeException e) {
+            System.out.println("RuntimeException: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public void insertDirectCampaignIntoSmsOutboundTable(final SavingsAccount savingsAccount, final SmsCampaign smsCampaign) {
+        try {
+            HashMap<String, String> campaignParams = new ObjectMapper().readValue(smsCampaign.getParamValue(),
+                    new TypeReference<HashMap<String, String>>() {});
+            campaignParams.put("savingsId", savingsAccount.getId().toString());
+            HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(smsCampaign.getParamValue(),
+                    new TypeReference<HashMap<String, String>>() {});
+            queryParamForRunReport.put("savingsId", savingsAccount.getId().toString());
+            
+            Client client = savingsAccount.getClient() ;
+			List<HashMap<String, Object>> runReportObject = this
+					.getRunReportByServiceImpl(campaignParams.get("reportName"), queryParamForRunReport);
+
+			if (runReportObject != null && runReportObject.size() > 0) {
+				for (HashMap<String, Object> entry : runReportObject) {
+					String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(),
+							smsCampaign.getCampaignName(), entry);
+					Object mobileNo = entry.get("mobileNo");
+
+					if (mobileNo != null) {
+						SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, textMessage,
+								mobileNo.toString(), smsCampaign);
+						smsMessage.setStatusType(SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue());
+						this.smsMessageRepository.save(smsMessage);
+						Collection<SmsMessage> messages = new ArrayList<>();
+						messages.add(smsMessage);
+						Map<SmsCampaign, Collection<SmsMessage>> smsDataMap = new HashMap<>();
+						smsDataMap.put(smsCampaign, messages);
+						this.smsMessageScheduledJobService.sendTriggeredMessages(smsDataMap);
+					}
+				}
+			}
+        } catch (final IOException e) {
+            System.out.println("IOException: " + e.getMessage());
+        } catch (final RuntimeException e) {
+            System.out.println("RuntimeException: " + e.getMessage());
+        }
+    }
+    
     private void updateTriggerDates(Long campaignId) {
         final SmsCampaign smsCampaign = this.smsCampaignRepository.findOne(campaignId);
         if (smsCampaign == null) { throw new SmsCampaignNotFound(campaignId); }

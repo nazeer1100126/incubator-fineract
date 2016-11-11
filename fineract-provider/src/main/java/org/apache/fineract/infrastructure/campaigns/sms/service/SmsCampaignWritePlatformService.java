@@ -12,6 +12,7 @@ import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.sms.domain.SmsMessage;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 
 public interface SmsCampaignWritePlatformService {
 
@@ -37,5 +38,9 @@ public interface SmsCampaignWritePlatformService {
 
     void insertTriggeredCampaignIntoSmsOutboundTable(Map<SmsCampaign, Collection<SmsMessage>> smsDataMap, SmsCampaign smsCampaign,
             Client client);
+    
+    public void insertDirectCampaignIntoSmsOutboundTable(final Client client, final SmsCampaign smsCampaign) ;
+    
+    public void insertDirectCampaignIntoSmsOutboundTable(final SavingsAccount savingsAccount, final SmsCampaign smsCampaign) ;
 
 }

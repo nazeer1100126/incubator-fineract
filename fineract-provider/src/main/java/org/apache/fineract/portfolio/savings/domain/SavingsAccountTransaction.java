@@ -389,7 +389,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         this.cumulativeBalance = Money.of(currency, this.runningBalance).multipliedBy(this.balanceNumberOfDays).getAmount();
     }
 
-    private LocalDate getTransactionLocalDate() {
+    public LocalDate getTransactionLocalDate() {
         return new LocalDate(this.dateOf);
     }
 
@@ -709,4 +709,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         return this.savingsAccount ;
     }
 
+    public PaymentDetail getPaymentDetail() {
+    	return this.paymentDetail ;
+    }
 }

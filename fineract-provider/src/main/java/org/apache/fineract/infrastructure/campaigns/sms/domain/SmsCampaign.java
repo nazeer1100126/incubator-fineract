@@ -21,8 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.campaigns.constants.CampaignType;
 import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignStatus;
 import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignTriggerType;
-import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignTriggerWithSubTypes.ActualCampaignTriggerType;
-import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignTriggerWithSubTypes.CampaignTriggerSubType;
 import org.apache.fineract.infrastructure.campaigns.sms.serialization.SmsCampaignValidator;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -51,17 +49,11 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
     @Column(name = "campaign_trigger_type", nullable = false)
     private Integer triggerType; //defines direct, scheduled, transaction
     
-    @Column(name = "trigger_entity_type", nullable = true)
-    private Integer triggerEntityType;
-
-    @Column(name = "trigger_action_type", nullable = true)
-    private Integer triggerActionType;
-
     @Column(name = "provider_id", nullable = false)
     private Long providerId; // defined provider details
 
     @ManyToOne
-    @JoinColumn(name = "report_id", nullable = true)
+    @JoinColumn(name = "report_id", nullable = false)
     private Report businessRuleId;
 
     @Column(name = "param_value")
@@ -117,8 +109,8 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
 
     public SmsCampaign() {}
 
-    private SmsCampaign(final String campaignName, final Integer campaignType, final Integer triggerType, final Integer triggerEntityType,
-            final Integer triggerActionType, final Report businessRuleId, final Long providerId, final String paramValue,
+    private SmsCampaign(final String campaignName, final Integer campaignType, 
+            final Integer triggerType, final Report businessRuleId, final Long providerId, final String paramValue,
             final String message, final LocalDate submittedOnDate, final AppUser submittedBy, final String recurrence,
             final LocalDateTime localDateTime) {
         this.campaignName = campaignName;
@@ -139,9 +131,6 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
         } else {
             this.recurrenceStartDate = recurrenceStartDate.toDate();
         }
-        this.triggerEntityType = triggerEntityType;
-        this.triggerActionType = triggerActionType;
-
     }
 
     public static SmsCampaign instance(final AppUser submittedBy, final Report report, final JsonCommand command) {
@@ -156,12 +145,6 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
         LocalDate submittedOnDate = new LocalDate();
         if (command.hasParameter(SmsCampaignValidator.submittedOnDateParamName)) {
             submittedOnDate = command.localDateValueOfParameterNamed(SmsCampaignValidator.submittedOnDateParamName);
-        }
-        Integer triggerEntityType = null;
-        Integer triggerActionType = null;
-        if (command.hasParameter(SmsCampaignValidator.triggerEntityType) && command.hasParameter(SmsCampaignValidator.triggerActionType)) {
-            triggerEntityType = command.integerValueOfParameterNamed(SmsCampaignValidator.triggerEntityType);
-            triggerActionType = command.integerValueOfParameterNamed(SmsCampaignValidator.triggerActionType);
         }
         String recurrence = null;
 
@@ -182,7 +165,7 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
             recurrenceStartDate = null;
         }
 
-        return new SmsCampaign(campaignName, campaignType.intValue(), triggerType.intValue(), triggerEntityType, triggerActionType, report,
+        return new SmsCampaign(campaignName, campaignType.intValue(), triggerType.intValue(), report,
                 providerId, paramValue, message, submittedOnDate, submittedBy, recurrence, recurrenceStartDate);
     }
 
@@ -215,18 +198,6 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
             final Integer newValue = command.integerValueOfParameterNamed(SmsCampaignValidator.triggerType);
             actualChanges.put(SmsCampaignValidator.triggerType, SmsCampaignTriggerType.fromInt(newValue));
             this.triggerType = SmsCampaignTriggerType.fromInt(newValue).getValue();
-        }
-
-        if (command.isChangeInIntegerParameterNamed(SmsCampaignValidator.triggerEntityType, this.triggerEntityType)) {
-            final Integer newValue = command.integerValueOfParameterNamed(SmsCampaignValidator.triggerEntityType);
-            actualChanges.put(SmsCampaignValidator.triggerEntityType, ActualCampaignTriggerType.fromInt(newValue));
-            this.triggerEntityType = ActualCampaignTriggerType.fromInt(newValue).getValue();
-        }
-
-        if (command.isChangeInIntegerParameterNamed(SmsCampaignValidator.triggerActionType, this.triggerActionType)) {
-            final Integer newValue = command.integerValueOfParameterNamed(SmsCampaignValidator.triggerActionType);
-            actualChanges.put(SmsCampaignValidator.triggerActionType, CampaignTriggerSubType.fromInt(newValue));
-            this.triggerActionType = CampaignTriggerSubType.fromInt(newValue).getId();
         }
 
         if (command.isChangeInLongParameterNamed(SmsCampaignValidator.runReportId,

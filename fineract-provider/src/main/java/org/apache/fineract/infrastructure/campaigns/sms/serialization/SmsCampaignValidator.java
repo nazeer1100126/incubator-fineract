@@ -113,13 +113,7 @@ public class SmsCampaignValidator {
             }
             final String recurrenceStartDate = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.recurrenceStartDate, element);
             baseDataValidator.reset().parameter(SmsCampaignValidator.recurrenceStartDate).value(recurrenceStartDate).notBlank();
-        } else if (triggerType.intValue() == SmsCampaignTriggerType.TRIGGERED.getValue()) {
-            final Integer triggerEntityTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerEntityType, element);
-            baseDataValidator.reset().parameter(triggerEntityType).value(triggerEntityTypeParam).notNull().integerGreaterThanZero();
-
-            final Integer triggerActionTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerActionType, element);
-            baseDataValidator.reset().parameter(triggerActionType).value(triggerActionTypeParam).notNull().integerGreaterThanZero();
-        }
+        } 
 
         final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);
         baseDataValidator.reset().parameter(SmsCampaignValidator.runReportId).value(runReportId).notNull().integerGreaterThanZero();
@@ -173,16 +167,7 @@ public class SmsCampaignValidator {
 
             final String recurrenceStartDate = this.fromApiJsonHelper.extractStringNamed(SmsCampaignValidator.recurrenceStartDate, element);
             baseDataValidator.reset().parameter(SmsCampaignValidator.recurrenceStartDate).value(recurrenceStartDate).notBlank();
-        } else if (triggerType.intValue() == SmsCampaignTriggerType.TRIGGERED.getValue()) {
-            if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.triggerEntityType, element)) {
-                final Integer triggerEntityTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerEntityType, element);
-                baseDataValidator.reset().parameter(triggerEntityType).value(triggerEntityTypeParam).notNull().integerGreaterThanZero();
-            }
-            if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.triggerActionType, element)) {
-                final Integer triggerActionTypeParam = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(triggerActionType, element);
-                baseDataValidator.reset().parameter(triggerActionType).value(triggerActionTypeParam).notNull().integerGreaterThanZero();
-            }
-        }
+        } 
 
         if(this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.runReportId, element)) {
             final Long runReportId = this.fromApiJsonHelper.extractLongNamed(SmsCampaignValidator.runReportId, element);

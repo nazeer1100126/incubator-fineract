@@ -19,8 +19,6 @@ public class SmsCampaignData {
     private final String paramValue;
     private final EnumOptionData campaignStatus;
     private final EnumOptionData triggerType;
-    private final EnumOptionData triggerEntityType;
-    private final EnumOptionData triggerActionType;
     private final String campaignMessage;
     private final DateTime nextTriggerDate;
     private final LocalDate lastTriggerDate;
@@ -45,10 +43,8 @@ public class SmsCampaignData {
 
     private final Collection<EnumOptionData> periodFrequencyOptions;
     
-    private final Collection<TriggerTypeWithSubTypesData> triggerTypeSubTypeOptions;
-
     private SmsCampaignData(final Long id, final String campaignName, final EnumOptionData campaignType, final EnumOptionData triggerType,
-            final EnumOptionData triggerEntityType, final EnumOptionData triggerActionType, final Long runReportId, 
+            final Long runReportId, 
             final String reportName, final String paramValue, final EnumOptionData campaignStatus,
             final String message, final DateTime nextTriggerDate, final LocalDate lastTriggerDate,
             final SmsCampaignTimeLine smsCampaignTimeLine, final DateTime recurrenceStartDate, final String recurrence,
@@ -56,7 +52,7 @@ public class SmsCampaignData {
             final Collection<SmsProviderData> smsProviderOptions, final Collection<EnumOptionData> campaignTypeOptions,
             final Collection<EnumOptionData> triggerTypeOptions, final Collection<EnumOptionData> months, 
             final Collection<EnumOptionData> weekDays, final Collection<EnumOptionData> frequencyTypeOptions, 
-            final Collection<EnumOptionData> periodFrequencyOptions, final Collection<TriggerTypeWithSubTypesData> triggerTypeSubTypeOptions) {
+            final Collection<EnumOptionData> periodFrequencyOptions) {
         this.id = id;
         this.campaignName = campaignName;
         this.campaignType = campaignType;
@@ -76,8 +72,6 @@ public class SmsCampaignData {
         } else {
             this.lastTriggerDate = null;
         }
-        this.triggerEntityType = triggerEntityType;
-        this.triggerActionType = triggerActionType;
         this.smsCampaignTimeLine = smsCampaignTimeLine;
         this.recurrenceStartDate = recurrenceStartDate;
         this.recurrence = recurrence;
@@ -90,11 +84,10 @@ public class SmsCampaignData {
         this.weekDays = weekDays;
         this.frequencyTypeOptions = frequencyTypeOptions;
         this.periodFrequencyOptions = periodFrequencyOptions;
-        this.triggerTypeSubTypeOptions = triggerTypeSubTypeOptions;
     }
 
     public static SmsCampaignData instance(final Long id, final String campaignName, final EnumOptionData campaignType,
-            final EnumOptionData triggerType, final EnumOptionData triggerEntityType, final EnumOptionData triggerActionType,
+            final EnumOptionData triggerType, 
             final Long runReportId, final String reportName, final String paramValue, final EnumOptionData campaignStatus,
             final String message, final DateTime nextTriggerDate, final LocalDate lastTriggerDate,
             final SmsCampaignTimeLine smsCampaignTimeLine, final DateTime recurrenceStartDate, final String recurrence,
@@ -107,19 +100,18 @@ public class SmsCampaignData {
         final Collection<EnumOptionData> weekDays = null;
         final Collection<EnumOptionData> frequencyTypeOptions = null;
         final Collection<EnumOptionData> periodFrequencyOptions = null;
-        final Collection<TriggerTypeWithSubTypesData> triggerTypeSubTypeOptions = null;
 
-        return new SmsCampaignData(id, campaignName, campaignType, triggerType, triggerEntityType, triggerActionType, runReportId,
+        return new SmsCampaignData(id, campaignName, campaignType, triggerType, runReportId,
                 reportName, paramValue, campaignStatus, message, nextTriggerDate, lastTriggerDate, smsCampaignTimeLine,
                 recurrenceStartDate, recurrence, providerId, businessRulesOptions, smsProviderOptions, campaignTypeOptions,
-                triggerTypeOptions, months, weekDays, frequencyTypeOptions, periodFrequencyOptions, triggerTypeSubTypeOptions);
+                triggerTypeOptions, months, weekDays, frequencyTypeOptions, periodFrequencyOptions);
     }
 
     public static SmsCampaignData template(final Collection<SmsProviderData> smsProviderOptions,
             final Collection<EnumOptionData> campaignTypeOptions, final Collection<SmsBusinessRulesData> businessRulesOptions,
             final Collection<EnumOptionData> triggerTypeOptions, final Collection<EnumOptionData> months,
             final Collection<EnumOptionData> weekDays, final Collection<EnumOptionData> frequencyTypeOptions,
-            final Collection<EnumOptionData> periodFrequencyOptions, Collection<TriggerTypeWithSubTypesData> triggerTypeSubTypeOptions) {
+            final Collection<EnumOptionData> periodFrequencyOptions) {
         final Long id = null;
         final String campaignName = null;
         final EnumOptionData campaignType = null;
@@ -135,12 +127,10 @@ public class SmsCampaignData {
         final EnumOptionData triggerType = null;
         final String reportName = null;
         final Long providerId = null;
-        final EnumOptionData triggerEntityType = null;
-        final EnumOptionData triggerActionType = null;
-        return new SmsCampaignData(id, campaignName, campaignType, triggerType, triggerEntityType, triggerActionType, runReportId,
+        return new SmsCampaignData(id, campaignName, campaignType, triggerType, runReportId,
                 reportName, paramValue, campaignStatus, message, nextTriggerDate, lastTriggerDate, smsCampaignTimeLine,
                 recurrenceStartDate, recurrence, providerId, businessRulesOptions, smsProviderOptions, campaignTypeOptions,
-                triggerTypeOptions, months, weekDays, frequencyTypeOptions, periodFrequencyOptions, triggerTypeSubTypeOptions);
+                triggerTypeOptions, months, weekDays, frequencyTypeOptions, periodFrequencyOptions);
     }
 
     public Long getId() {
@@ -165,14 +155,6 @@ public class SmsCampaignData {
 
     public EnumOptionData getCampaignStatus() {
         return this.campaignStatus;
-    }
-
-    public EnumOptionData getTriggerEntityType() {
-        return this.triggerEntityType;
-    }
-
-    public EnumOptionData getTriggerActionType() {
-        return this.triggerActionType;
     }
 
     public String getMessage() {

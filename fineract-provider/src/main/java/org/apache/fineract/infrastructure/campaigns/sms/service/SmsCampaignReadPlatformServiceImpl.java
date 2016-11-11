@@ -11,13 +11,10 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.campaigns.constants.CampaignType;
 import org.apache.fineract.infrastructure.campaigns.sms.constants.SmsCampaignTriggerType;
-import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignTriggerWithSubTypes.ActualCampaignTriggerType;
-import org.apache.fineract.infrastructure.campaigns.sms.data.CampaignTriggerWithSubTypes.CampaignTriggerSubType;
 import org.apache.fineract.infrastructure.campaigns.sms.data.SmsBusinessRulesData;
 import org.apache.fineract.infrastructure.campaigns.sms.data.SmsCampaignData;
 import org.apache.fineract.infrastructure.campaigns.sms.data.SmsCampaignTimeLine;
 import org.apache.fineract.infrastructure.campaigns.sms.data.SmsProviderData;
-import org.apache.fineract.infrastructure.campaigns.sms.data.TriggerTypeWithSubTypesData;
 import org.apache.fineract.infrastructure.campaigns.sms.domain.SmsCampaignStatusEnumerations;
 import org.apache.fineract.infrastructure.campaigns.sms.exception.SmsCampaignNotFound;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
@@ -89,9 +86,9 @@ public class SmsCampaignReadPlatformServiceImpl implements SmsCampaignReadPlatfo
         final Collection<EnumOptionData> frequencyTypeOptions = this.calendarDropdownReadPlatformService
                 .retrieveCalendarFrequencyTypeOptions();
         final Collection<EnumOptionData> periodFrequencyOptions = this.smsCampaignDropdownReadPlatformService.retrivePeriodFrequencyTypes();
-        final Collection<TriggerTypeWithSubTypesData> triggerTypeSubTypeOptions = this.smsCampaignDropdownReadPlatformService.getTriggerTypeAndSubTypes();
+        //final Collection<TriggerTypeWithSubTypesData> triggerTypeSubTypeOptions = this.smsCampaignDropdownReadPlatformService.getTriggerTypeAndSubTypes();
         return SmsCampaignData.template(smsProviderOptions, campaignTypeOptions, businessRulesOptions, campaignTriggerTypeOptions, months,
-                weekDays, frequencyTypeOptions, periodFrequencyOptions, triggerTypeSubTypeOptions);
+                weekDays, frequencyTypeOptions, periodFrequencyOptions);
     }
 
     @Override
@@ -190,9 +187,7 @@ public class SmsCampaignReadPlatformServiceImpl implements SmsCampaignReadPlatfo
             sql.append("acu.username as activatedByUsername, ");
             sql.append("sc.approvedon_date as activatedOnDate, ");
             sql.append("sr.report_name as reportName, ");
-            sql.append("provider_id as providerId, ");
-            sql.append("trigger_entity_type as triggerEntityType, ");
-            sql.append("trigger_action_type as triggerActionType ");
+            sql.append("provider_id as providerId ");
             sql.append("from sms_campaign sc ");
             sql.append("left join m_appuser sbu on sbu.id = sc.submittedon_userid ");
             sql.append("left join m_appuser acu on acu.id = sc.approvedon_userid ");
@@ -221,16 +216,6 @@ public class SmsCampaignReadPlatformServiceImpl implements SmsCampaignReadPlatfo
             final Integer triggerType = JdbcSupport.getInteger(rs, "triggerType");
             final EnumOptionData triggerTypeEnum = SmsCampaignTriggerType.triggerType(triggerType);
 
-            EnumOptionData triggerEntityTypeEnum = null;
-            EnumOptionData triggerActionTypeEnum = null;
-            if (SmsCampaignTriggerType.fromInt(triggerType).isTriggered()) {
-                final Integer triggerEntityType = JdbcSupport.getInteger(rs, "triggerEntityType");
-                triggerEntityTypeEnum = ActualCampaignTriggerType.toEnumOptionData(triggerEntityType);
-
-                final Integer triggerActionType = JdbcSupport.getInteger(rs, "triggerActionType");
-                triggerActionTypeEnum = CampaignTriggerSubType.toEnumOptionData(triggerActionType);
-            }
-
             final DateTime nextTriggerDate = JdbcSupport.getDateTime(rs, "nextTriggerDate");
             final LocalDate lastTriggerDate = JdbcSupport.getLocalDate(rs, "lastTriggerDate");
 
@@ -249,8 +234,7 @@ public class SmsCampaignReadPlatformServiceImpl implements SmsCampaignReadPlatfo
             final String reportName = rs.getString("reportName");
             final Long providerId = rs.getLong("providerId");
 
-            return SmsCampaignData.instance(id, campaignName, campaignTypeEnum, triggerTypeEnum, triggerEntityTypeEnum,
-                    triggerActionTypeEnum, runReportId, reportName, paramValue, status, message, nextTriggerDate, lastTriggerDate,
+            return SmsCampaignData.instance(id, campaignName, campaignTypeEnum, triggerTypeEnum, runReportId, reportName, paramValue, status, message, nextTriggerDate, lastTriggerDate,
                     smsCampaignTimeLine, recurrenceStartDate, recurrence, providerId);
         }
     }

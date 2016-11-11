@@ -191,7 +191,9 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                         SmsMessageApiQueueResourceData apiQueueResourceData = SmsMessageApiQueueResourceData.instance(smsMessage.getId(),
                                 null, null, null, smsMessage.getMobileNo(), smsMessage.getMessage(), entry.getKey().getProviderId());
                         apiQueueResourceDatas.add(apiQueueResourceData);
+                        smsMessage.setStatusType(SmsMessageStatusType.WAITING_FOR_DELIVERY_REPORT.getValue());
                     }
+                    this.smsMessageRepository.save(entry.getValue()) ;
                     request.append(SmsMessageApiQueueResourceData.toJsonString(apiQueueResourceDatas));
                     logger.info("Sending triggered SMS with request - " + request.toString());
                     this.triggeredExecutorService.execute(new SmsTask(ThreadLocalContextUtil.getTenant(), apiQueueResourceDatas));
