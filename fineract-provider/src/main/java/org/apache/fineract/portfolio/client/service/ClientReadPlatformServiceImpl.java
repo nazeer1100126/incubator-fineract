@@ -41,7 +41,7 @@ import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksReadService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
-import org.apache.fineract.infrastructure.security.utils.SQLInjectionValidator;
+import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
 import org.apache.fineract.organisation.staff.data.StaffData;
@@ -66,7 +66,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 @Service
@@ -88,6 +87,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final AddressReadPlatformService addressReadPlatformService;
     private final ConfigurationReadPlatformService configurationReadPlatformService;
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
+    private final ColumnValidator columnValidator;
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -96,7 +96,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final SavingsProductReadPlatformService savingsProductReadPlatformService,
             final AddressReadPlatformService addressReadPlatformService,
             final ConfigurationReadPlatformService configurationReadPlatformService,
-            final EntityDatatableChecksReadService entityDatatableChecksReadService) {
+            final EntityDatatableChecksReadService entityDatatableChecksReadService,
+            final ColumnValidator columnValidator) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -106,6 +107,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.addressReadPlatformService=addressReadPlatformService;
         this.configurationReadPlatformService=configurationReadPlatformService;
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
+        this.columnValidator = columnValidator;
     }
 
     @Override
@@ -189,7 +191,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         }
 
         final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
-
+        
         if (StringUtils.isNotBlank(extraCriteria)) {
             sqlBuilder.append(" and (").append(extraCriteria).append(")");
         }
@@ -214,6 +216,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         if(searchParameters.isSelfUser()){
             params = new Object[] {underHierarchySearchString, underHierarchySearchString, appUserID };
         }
+        if(StringUtils.isNotBlank(extraCriteria)){
+        	this.columnValidator.validateSqlInjection(this.clientMapper.schema(),extraCriteria);
+        }        
         return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), params, this.clientMapper);
     }
 
@@ -228,7 +233,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         String extraCriteria = "";
         if (sqlSearch != null) {
-        	SQLInjectionValidator.validateSQLInput(sqlSearch);
             sqlSearch = sqlSearch.replaceAll(" display_name ", " c.display_name ");
             sqlSearch = sqlSearch.replaceAll("display_name ", "c.display_name ");
             extraCriteria = " and (" + sqlSearch + ")";
@@ -267,7 +271,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         if (StringUtils.isNotBlank(extraCriteria)) {
             extraCriteria = extraCriteria.substring(4);
         }
-
         return extraCriteria;
     }
 
@@ -302,7 +305,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         if (StringUtils.isNotBlank(extraCriteria)) {
             sql += " and (" + extraCriteria + ")";
         }
-
+        this.columnValidator.validateSqlInjection(sql, extraCriteria);
         return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] {});
     }
 
