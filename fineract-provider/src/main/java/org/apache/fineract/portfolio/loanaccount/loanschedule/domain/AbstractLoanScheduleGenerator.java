@@ -2600,10 +2600,12 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         if (loanApplicationTerms.getPreClosureInterestCalculationStrategy().calculateTillRestFrequencyEnabled()) {
             calculateTill = getNextRestScheduleDate(onDate.minusDays(1), loanApplicationTerms, holidayDetailDTO);
         }
-
+        
+        List<LoanTransaction> loanTransactions = loan.retreiveListOfTransactionsPostDisbursementExcludeAccruals();
+        
         LoanScheduleDTO loanScheduleDTO = rescheduleNextInstallments(mc, loanApplicationTerms, loan, holidayDetailDTO, loanRepaymentScheduleTransactionProcessor,
                 onDate, calculateTill);
-        List<LoanTransaction> loanTransactions = loan.retreiveListOfTransactionsPostDisbursementExcludeAccruals();
+        //List<LoanTransaction> loanTransactions = loan.retreiveListOfTransactionsPostDisbursementExcludeAccruals();
 
         loanRepaymentScheduleTransactionProcessor.handleTransaction(loanApplicationTerms.getExpectedDisbursementDate(), loanTransactions,
                 currency, loanScheduleDTO.getInstallments(), loan.charges());
