@@ -83,4 +83,10 @@ public class DisbursementData implements Comparable<DisbursementData> {
         return target != null && target.isAfter(fromNotInclusive) && !target.isAfter(upToAndInclusive);
     }
 
+	public BigDecimal getPrincipal() {
+		return this.principal;
+	}
+    
+    
+
 }
