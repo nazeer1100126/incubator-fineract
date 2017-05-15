@@ -1944,8 +1944,16 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                         && loanCharge.getChargeCalculation().isPercentageBased()) {
                     cumulative = cumulative.plus(loanCharge.chargeAmount());
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)
-                        && loanCharge.getChargeCalculation().isPercentageBased()) {
-                    cumulative = calculateSpecificDueDateChargeWithPercentage(principalDisbursed, totalInterestChargedForFullLoanTerm,
+                        && loanCharge.getChargeCalculation().isPercentageBased()) {                	 
+                	/*if(loanCharge.getLoan().isMultiDisburmentLoan()){
+                		Money disbursedAmount = getTrancheInstallmentAmount(periodStart, periodEnd, loanCharge, principalDisbursed);
+                		cumulative = calculateSpecificDueDateChargeWithPercentage(disbursedAmount, totalInterestChargedForFullLoanTerm,
+                                cumulative, loanCharge); 
+                	}else{
+                		cumulative = calculateSpecificDueDateChargeWithPercentage(principalDisbursed, totalInterestChargedForFullLoanTerm,
+                                cumulative, loanCharge);  
+                	}*/
+                	cumulative = calculateSpecificDueDateChargeWithPercentage(principalDisbursed, totalInterestChargedForFullLoanTerm,
                             cumulative, loanCharge);
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)) {
                     cumulative = cumulative.plus(loanCharge.amount());
@@ -1954,6 +1962,16 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         }
 
         return cumulative;
+    }
+    
+    private Money getTrancheInstallmentAmount(final LocalDate periodStart, final LocalDate periodEnd, LoanCharge loanCharge, Money principalDisbursed){
+    	if((loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest() || loanCharge.getChargeCalculation().isPercentageOfInterest())){
+    		return principalDisbursed;
+    	}
+    	for (DisbursementData disbursementData : loanCharge.getLoan().getDisbursmentData()) {
+				System.out.println(disbursementData.disbursementDate());
+		}
+    	return null;
     }
 
     private Money calculateSpecificDueDateChargeWithPercentage(final Money principalDisbursed,
@@ -1964,7 +1982,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
             amount = amount.add(totalInterestChargedForFullLoanTerm.getAmount());
         } else {
-            amount = amount.add(principalDisbursed.getAmount());
+        	amount = amount.add(principalDisbursed.getAmount());            
         }
         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
         cumulative = cumulative.plus(loanChargeAmt);
