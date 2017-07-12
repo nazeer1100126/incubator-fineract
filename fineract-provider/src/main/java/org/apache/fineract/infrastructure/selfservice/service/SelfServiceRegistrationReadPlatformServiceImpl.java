@@ -24,10 +24,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SelfServiceRegistrationReadPlatformServiceImpl implements SelfServiceRegistrationReadPlatformService{
+public class SelfServiceRegistrationReadPlatformServiceImpl implements SelfServiceRegistrationReadPlatformService {
 
     private final JdbcTemplate jdbcTemplate;
-    
+
     @Autowired
     public SelfServiceRegistrationReadPlatformServiceImpl(final RoutingDataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -36,10 +36,8 @@ public class SelfServiceRegistrationReadPlatformServiceImpl implements SelfServi
     @Override
     public boolean isClientExist(Long clientId, String firstName, String lastName, String mobileNumber) {
         String sql = "select count(*) from m_client where id = ? and mobile_no = ? and firstname = ? and lastname = ?";
-        Integer count = this.jdbcTemplate.queryForObject(sql, new Object[] { clientId,mobileNumber, firstName, lastName}, Integer.class);
-        if(count==0){
-            return false;
-        }
+        Integer count = this.jdbcTemplate.queryForObject(sql, new Object[] { clientId, mobileNumber, firstName, lastName }, Integer.class);
+        if (count == 0) { return false; }
         return true;
     }
 

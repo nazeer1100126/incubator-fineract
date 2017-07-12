@@ -76,6 +76,7 @@ public class SelfServiceRegistrationApiResource {
         return new Gson().toJson(responseMap);        
     }
     
+    @SuppressWarnings("unused")
     @POST
     @Path("user")
     @Produces({ MediaType.APPLICATION_JSON })

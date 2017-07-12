@@ -33,12 +33,12 @@ import org.apache.fineract.portfolio.client.domain.Client;
 
 @Entity
 @Table(name = "request_audit_table")
-public class SelfServiceRegistration  extends AbstractPersistableCustom<Long> {
-    
+public class SelfServiceRegistration extends AbstractPersistableCustom<Long> {
+
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
-    
+
     @Column(name = "firstname", length = 50, nullable = false)
     private String firstName;
 
@@ -47,28 +47,28 @@ public class SelfServiceRegistration  extends AbstractPersistableCustom<Long> {
 
     @Column(name = "mobile_number", length = 50, nullable = true)
     private String mobileNumber;
-    
+
     @Column(name = "email", length = 50, nullable = true)
     private String email;
-    
+
     @Column(name = "provider_id", length = 50, nullable = false)
     private Long providerId;
-    
+
     @Column(name = "authentication_token", length = 50, nullable = true)
     private String authenticationToken;
-    
+
     @Column(name = "username", length = 50, nullable = false)
     private String username;
 
     @Column(name = "password", length = 50, nullable = true)
     private String password;
-    
+
     @Column(name = "created_date", nullable = false)
     @Temporal(TemporalType.DATE)
     private Date createdDate;
 
-    public SelfServiceRegistration(final Client client,final  String firstName,final String lastName,final String mobileNumber,final String email,
-            final String authenticationToken, final String username, final String password, final Long providerId) {
+    public SelfServiceRegistration(final Client client, final String firstName, final String lastName, final String mobileNumber,
+            final String email, final String authenticationToken, final String username, final String password, final Long providerId) {
         this.client = client;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -80,16 +80,18 @@ public class SelfServiceRegistration  extends AbstractPersistableCustom<Long> {
         this.createdDate = new Date();
         this.providerId = providerId;
     }
-    
-    public static SelfServiceRegistration instance(final Client client,final  String firstname,final String lastName,final String mobileNumber,final String email,
-            final String authenticationToken, final String username, final String password, final Long providerId){
-        return new SelfServiceRegistration(client,firstname,lastName,mobileNumber,email,authenticationToken, username, password, providerId);
+
+    public static SelfServiceRegistration instance(final Client client, final String firstname, final String lastName,
+            final String mobileNumber, final String email, final String authenticationToken, final String username, final String password,
+            final Long providerId) {
+        return new SelfServiceRegistration(client, firstname, lastName, mobileNumber, email, authenticationToken, username, password,
+                providerId);
     }
-    
+
     public Long getProviderId() {
         return this.providerId;
     }
-    
+
     public void setProviderId(Long providerId) {
         this.providerId = providerId;
     }
@@ -98,44 +100,36 @@ public class SelfServiceRegistration  extends AbstractPersistableCustom<Long> {
         return this.client;
     }
 
-    
     public String getFirstName() {
         return this.firstName;
     }
 
-    
     public String getLastName() {
         return this.lastName;
     }
 
-    
     public String getMobileNumber() {
         return this.mobileNumber;
     }
 
-    
     public String getEmail() {
         return this.email;
     }
 
-    
     public String getAuthenticationToken() {
         return this.authenticationToken;
     }
 
-    
     public Date getCreatedDate() {
         return this.createdDate;
     }
 
-    
     public String getUsername() {
         return this.username;
     }
 
-    
     public String getPassword() {
         return this.password;
     }
-    
+
 }

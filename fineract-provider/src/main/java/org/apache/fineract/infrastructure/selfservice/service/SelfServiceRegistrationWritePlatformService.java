@@ -21,10 +21,9 @@ package org.apache.fineract.infrastructure.selfservice.service;
 import org.apache.fineract.infrastructure.selfservice.domain.SelfServiceRegistration;
 import org.apache.fineract.useradministration.domain.AppUser;
 
-
 public interface SelfServiceRegistrationWritePlatformService {
-    
+
     public SelfServiceRegistration createRegistrationRequest(String apiRequestBodyAsJson);
-    
+
     public AppUser createUser(String apiRequestBodyAsJson);
 }
