@@ -85,5 +85,13 @@ public class ClientRepositoryWrapper {
         this.context.validateAccessRights(client.getOffice().getHierarchy());
         return client;
     }
-
+    
+    public Client getClientByAccountNumber(String accountNumber){
+        Client client = this.repository.getClientByAccountNumber(accountNumber);
+        if(client==null){
+            throw  new ClientNotFoundException(accountNumber);
+        }
+        client.loadLazyCollections();
+        return client;
+    }
 }
