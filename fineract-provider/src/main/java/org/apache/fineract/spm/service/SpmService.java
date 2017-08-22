@@ -20,11 +20,11 @@ package org.apache.fineract.spm.service;
 
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.spm.domain.Survey;
+import org.apache.fineract.spm.domain.SurveyValidator;
 import org.apache.fineract.spm.repository.SurveyRepository;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -34,13 +34,16 @@ public class SpmService {
 
     private final PlatformSecurityContext securityContext;
     private final SurveyRepository surveyRepository;
+    private final SurveyValidator surveyValidator;
 
     @Autowired
     public SpmService(final PlatformSecurityContext securityContext,
-                      final SurveyRepository surveyRepository) {
+                      final SurveyRepository surveyRepository,
+                      final SurveyValidator surveyValidator) {
         super();
         this.securityContext = securityContext;
         this.surveyRepository = surveyRepository;
+        this.surveyValidator = surveyValidator;
     }
 
     public List<Survey> fetchValidSurveys() {
@@ -57,7 +60,7 @@ public class SpmService {
 
     public Survey createSurvey(final Survey survey) {
         this.securityContext.authenticatedUser();
-
+        this.surveyValidator.validateForCreate(survey);
         final Survey previousSurvey = this.surveyRepository.findByKey(survey.getKey(), new Date());
 
         if (previousSurvey != null) {
@@ -86,6 +89,11 @@ public class SpmService {
 
         survey.setValidTo(validTo.toDate());
 
+        return this.surveyRepository.saveAndFlush(survey);
+    }
+    
+    public Survey updateSurvey(final Survey survey) {
+        this.surveyValidator.validateForCreate(survey);
         return this.surveyRepository.save(survey);
     }
 

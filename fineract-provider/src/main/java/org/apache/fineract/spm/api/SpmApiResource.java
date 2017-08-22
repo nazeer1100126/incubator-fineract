@@ -18,21 +18,36 @@
  */
 package org.apache.fineract.spm.api;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.PersistenceException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.spm.data.SurveyData;
 import org.apache.fineract.spm.domain.Survey;
 import org.apache.fineract.spm.exception.SurveyNotFoundException;
 import org.apache.fineract.spm.service.SpmService;
 import org.apache.fineract.spm.util.SurveyMapper;
+import org.apache.openjpa.persistence.EntityExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.List;
 
 @Path("/surveys")
 @Component
@@ -91,11 +106,55 @@ public class SpmApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Transactional
     public void createSurvey(final SurveyData surveyData) {
-        this.securityContext.authenticatedUser();
+        
+        try {
+            this.securityContext.authenticatedUser();
+            final Survey survey = SurveyMapper.map(surveyData, new Survey());
 
-        final Survey survey = SurveyMapper.map(surveyData);
+            this.spmService.createSurvey(survey);
+        }catch(final EntityExistsException dve) {
+            handleDataIntegrityIssues(dve, dve);
+        }catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(dve.getMostSpecificCause(), dve);
 
-        this.spmService.createSurvey(survey);
+        }catch (final JpaSystemException dve) {
+            handleDataIntegrityIssues(dve.getMostSpecificCause(), dve);
+
+        }catch (final PersistenceException dve) {
+            handleDataIntegrityIssues(dve, dve);
+        }
+    }
+    
+    @PUT
+    @Path("/{id}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    @Transactional
+    public void editSurvey(@PathParam("id") final Long id, final SurveyData surveyData) {
+        try {
+            this.securityContext.authenticatedUser();
+            
+            final Survey surveyToUpdate = this.spmService.findById(id);
+
+            if (surveyToUpdate == null) {
+                throw new SurveyNotFoundException(id);
+            }
+            
+            final Survey survey = SurveyMapper.map(surveyData, surveyToUpdate);
+
+            this.spmService.updateSurvey(survey);
+        }catch(final EntityExistsException dve) {
+            handleDataIntegrityIssues(dve, dve);
+        }catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(dve.getMostSpecificCause(), dve);
+
+        }catch (final JpaSystemException dve) {
+            handleDataIntegrityIssues(dve.getMostSpecificCause(), dve);
+
+        }catch (final PersistenceException dve) {
+            handleDataIntegrityIssues(dve, dve);
+
+        }
     }
 
     @DELETE
@@ -107,5 +166,16 @@ public class SpmApiResource {
         this.securityContext.authenticatedUser();
 
         this.spmService.deactivateSurvey(id);
+    }
+    
+    private void handleDataIntegrityIssues(final Throwable realCause, final Exception dve) {
+
+        if (realCause.getMessage().contains("key")) {
+            throw new PlatformDataIntegrityException("error.msg.survey.duplicate.key", "Survey with key already exists",
+                    "name", "");
+        }
+
+        throw new PlatformDataIntegrityException("error.msg.survey.unknown.data.integrity.issue",
+                "Unknown data integrity issue with resource: " + realCause.getMessage());
     }
 }
