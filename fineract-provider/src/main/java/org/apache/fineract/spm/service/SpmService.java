@@ -20,11 +20,12 @@ package org.apache.fineract.spm.service;
 
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.spm.domain.Survey;
+import org.apache.fineract.spm.domain.SurveyValidator;
+import org.apache.fineract.spm.exception.SurveyNotFoundException;
 import org.apache.fineract.spm.repository.SurveyRepository;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -34,13 +35,16 @@ public class SpmService {
 
     private final PlatformSecurityContext securityContext;
     private final SurveyRepository surveyRepository;
+    private final SurveyValidator surveyValidator;
 
     @Autowired
     public SpmService(final PlatformSecurityContext securityContext,
-                      final SurveyRepository surveyRepository) {
+                      final SurveyRepository surveyRepository,
+                      final SurveyValidator surveyValidator) {
         super();
         this.securityContext = securityContext;
         this.surveyRepository = surveyRepository;
+        this.surveyValidator = surveyValidator;
     }
 
     public List<Survey> fetchValidSurveys() {
@@ -51,13 +55,16 @@ public class SpmService {
 
     public Survey findById(final Long id) {
         this.securityContext.authenticatedUser();
-
-        return this.surveyRepository.findOne(id);
+        Survey survey = this.surveyRepository.findOne(id);
+        if (survey == null) {
+            throw new SurveyNotFoundException(id);
+        }
+        return survey;
     }
 
     public Survey createSurvey(final Survey survey) {
         this.securityContext.authenticatedUser();
-
+        this.surveyValidator.validate(survey);
         final Survey previousSurvey = this.surveyRepository.findByKey(survey.getKey(), new Date());
 
         if (previousSurvey != null) {
@@ -86,26 +93,27 @@ public class SpmService {
 
         survey.setValidTo(validTo.toDate());
 
-        return this.surveyRepository.save(survey);
+        return this.surveyRepository.saveAndFlush(survey);
+    }
+    
+    public Survey updateSurvey(final Survey survey) {
+        this.surveyValidator.validate(survey);
+        return this.surveyRepository.saveAndFlush(survey);
     }
 
     public void deactivateSurvey(final Long id) {
         this.securityContext.authenticatedUser();
 
-        final Survey survey = this.surveyRepository.findOne(id);
+        final Survey survey = findById(id);
+        final DateTime dateTime = DateTime
+                .now()
+                .withHourOfDay(23)
+                .withMinuteOfHour(59)
+                .withSecondOfMinute(59)
+                .withMillisOfSecond(999)
+                .minusDays(1);
+        survey.setValidTo(dateTime.toDate());
 
-        if (survey != null) {
-            // set valid to to yesterday night
-            final DateTime dateTime = DateTime
-                    .now()
-                    .withHourOfDay(23)
-                    .withMinuteOfHour(59)
-                    .withSecondOfMinute(59)
-                    .withMillisOfSecond(999)
-                    .minusDays(1);
-            survey.setValidTo(dateTime.toDate());
-
-            this.surveyRepository.save(survey);
-        }
+        this.surveyRepository.save(survey);
     }
 }
