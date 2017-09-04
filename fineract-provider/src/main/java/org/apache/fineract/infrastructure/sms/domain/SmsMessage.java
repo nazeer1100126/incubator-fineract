@@ -66,7 +66,7 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
     @Column(name = "status_enum", nullable = false)
     private Integer statusType;
 
-    @Column(name = "mobile_no", nullable = false, length = 50)
+    @Column(name = "mobile_no", nullable = true, length = 50)
     private String mobileNo;
 
     @Column(name = "message", nullable = false)
@@ -84,7 +84,10 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
 
     @Column(name = "delivered_on_date", nullable = true)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date deliveredOnDate;
+    private Date deliveredOnDate; 
+    
+    @Column(name = "is_notification", nullable = false)
+    private boolean isNotification;
 
     public static SmsMessage pendingSms(final String externalId, final Group group, final Client client, final Staff staff,
             final String message, final String mobileNo, final SmsCampaign smsCampaign) {
@@ -183,4 +186,14 @@ public class SmsMessage extends AbstractPersistableCustom<Long> {
     public void setDeliveredOnDate(final Date deliveredOnDate) {
         this.deliveredOnDate = deliveredOnDate;
     }
+
+	public boolean isNotification() {
+		return this.isNotification;
+	}
+
+	public void setNotification(boolean isNotification) {
+		this.isNotification = isNotification;
+	}
+    
+    
 }

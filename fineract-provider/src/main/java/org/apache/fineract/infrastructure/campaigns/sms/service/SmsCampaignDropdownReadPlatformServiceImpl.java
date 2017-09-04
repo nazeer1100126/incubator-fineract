@@ -76,15 +76,17 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
             Map<String, Object> hostConfig = this.smsConfigUtils.getMessageGateWayRequestURI("smsbridges", null);
             URI uri = (URI) hostConfig.get("uri");
             hostName = uri.getHost() ;
-            HttpEntity<?> entity = (HttpEntity<?>) hostConfig.get("entity");
+            Object httpEntity = hostConfig.get("entity");
+            System.out.println(httpEntity);
+            HttpEntity<?> entity = (HttpEntity<?>) httpEntity ;
             ResponseEntity<Collection<SmsProviderData>> responseOne = restTemplate.exchange(uri, HttpMethod.GET, entity,
                     new ParameterizedTypeReference<Collection<SmsProviderData>>() {});
             smsProviderOptions = responseOne.getBody();
             if (!responseOne.getStatusCode().equals(HttpStatus.OK)) {
-                throw new ConnectionFailureException(hostName);
+               // throw new ConnectionFailureException(hostName);
             }
         } catch (Exception e) {
-        	 throw new ConnectionFailureException(hostName);
+        	// throw new ConnectionFailureException(hostName);
         }
         return smsProviderOptions;
     }
@@ -92,7 +94,8 @@ public class SmsCampaignDropdownReadPlatformServiceImpl implements SmsCampaignDr
     @Override
     public Collection<EnumOptionData> retrieveCampaignTypes() {
         final List<EnumOptionData> campaignTypeCodeValues = Arrays.asList( //
-                SmsCampaignEnumerations.smscampaignType(CampaignType.SMS)//
+                SmsCampaignEnumerations.smscampaignType(CampaignType.SMS),
+                SmsCampaignEnumerations.smscampaignType(CampaignType.NOTIFICATION)//
                 );
         return campaignTypeCodeValues;
     }

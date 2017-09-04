@@ -67,6 +67,7 @@ public class SmsCampaignValidator {
     public static final String frequencyParamName = "frequency";
     public static final String intervalParamName = "interval";
     public static final String repeatsOnDayParamName = "repeatsOnDay";
+    public static final String isNotificationParamName = "isNotification";
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -74,12 +75,12 @@ public class SmsCampaignValidator {
             localeParamName,
             dateFormatParamName, runReportId, paramValue, message, recurrenceStartDate, activationDateParamName, submittedOnDateParamName,
             closureDateParamName, recurrenceParamName, providerId, triggerType, frequencyParamName, intervalParamName,
-            repeatsOnDayParamName, triggerEntityType, triggerActionType, dateTimeFormat));
+            repeatsOnDayParamName, triggerEntityType, triggerActionType, dateTimeFormat, isNotificationParamName));
 
     protected static final Set<String> supportedParamsForUpdate = new HashSet<>(Arrays.asList(campaignName, campaignType,
             localeParamName,
             dateFormatParamName, runReportId, paramValue, message, recurrenceStartDate, activationDateParamName, recurrenceParamName,
-            providerId, triggerType, triggerEntityType, triggerActionType, dateTimeFormat));
+            providerId, triggerType, triggerEntityType, triggerActionType, dateTimeFormat, isNotificationParamName));
 
     protected static final Set<String> ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName,
@@ -159,6 +160,12 @@ public class SmsCampaignValidator {
                     element);
             baseDataValidator.reset().parameter(SmsCampaignValidator.submittedOnDateParamName).value(submittedOnDate).notNull();
         }
+        
+        if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.isNotificationParamName, element)) {
+            final Boolean isNotification = this.fromApiJsonHelper.extractBooleanNamed(SmsCampaignValidator.isNotificationParamName,
+                    element);
+            baseDataValidator.reset().parameter(SmsCampaignValidator.submittedOnDateParamName).trueOrFalseRequired(isNotification);
+        }
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
 
     }
@@ -214,7 +221,11 @@ public class SmsCampaignValidator {
                 }
             }
         }
-
+        if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.isNotificationParamName, element)) {
+            final Boolean isNotification = this.fromApiJsonHelper.extractBooleanNamed(SmsCampaignValidator.isNotificationParamName,
+                    element);
+            baseDataValidator.reset().parameter(SmsCampaignValidator.submittedOnDateParamName).trueOrFalseRequired(isNotification);
+        }
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
 
     }
