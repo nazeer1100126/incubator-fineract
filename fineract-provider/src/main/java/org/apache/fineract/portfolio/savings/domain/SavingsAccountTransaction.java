@@ -47,6 +47,7 @@ import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountSubTransactionEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.savings.domain.interest.EndOfDayBalance;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
@@ -124,6 +125,12 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     
     @Column(name = "release_id_of_hold_amount", length = 20)
     private Long releaseIdOfHoldAmountTransaction;
+    
+    @Column(name = "transaction_sub_type_enum", nullable = true)
+    private Integer subTypeOf;
+    
+    @Column(name = "created_at_office", nullable = true)
+    private Long createdAtOfficeId;
 
     protected SavingsAccountTransaction() {
         this.dateOf = null;
@@ -457,7 +464,7 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         final Map<String, Object> thisTransactionData = new LinkedHashMap<>();
 
         final SavingsAccountTransactionEnumData transactionType = SavingsEnumerations.transactionType(this.typeOf);
-
+        final SavingsAccountSubTransactionEnumData subTransactionType = SavingsEnumerations.subTransactionType(this.subTypeOf);
         thisTransactionData.put("id", getId());
         thisTransactionData.put("officeId", this.office.getId());
         thisTransactionData.put("type", transactionType);
@@ -466,6 +473,8 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
         thisTransactionData.put("currency", currencyData);
         thisTransactionData.put("amount", this.amount);
         thisTransactionData.put("overdraftAmount", this.overdraftAmount);
+        thisTransactionData.put("createdAtOffice", this.createdAtOfficeId);
+        thisTransactionData.put("subTypeOf", subTransactionType);
 
         if (this.paymentDetail != null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
@@ -790,5 +799,23 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     
 	public boolean isAmountOnHoldNotReleased() {
 		return (isAmountOnHold() && getReleaseIdOfHoldAmountTransaction() == null);
+	}
+
+	public Integer getSubTypeOf() {
+		return this.subTypeOf;
+	}
+
+	public void setSubTypeOf(Integer subTypeOf) {
+		this.subTypeOf = subTypeOf;
+	}
+
+	public Long getCreatedAtOfficeId() {
+		return this.createdAtOfficeId;
+	}
+
+	public void setCreatedAtOfficeId(Long createdAtOfficeId) {
+		this.createdAtOfficeId = createdAtOfficeId;
 	}	    
+	
+	
 }

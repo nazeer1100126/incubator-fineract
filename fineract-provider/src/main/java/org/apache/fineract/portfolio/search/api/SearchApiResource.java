@@ -18,7 +18,9 @@
  */
 package org.apache.fineract.portfolio.search.api;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -35,6 +37,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.search.SearchConstants.SEARCH_RESPONSE_PARAMETERS;
 import org.apache.fineract.portfolio.search.data.AdHocQueryDataValidator;
 import org.apache.fineract.portfolio.search.data.AdHocQuerySearchConditions;
@@ -42,6 +45,7 @@ import org.apache.fineract.portfolio.search.data.AdHocSearchQueryData;
 import org.apache.fineract.portfolio.search.data.SearchConditions;
 import org.apache.fineract.portfolio.search.data.SearchData;
 import org.apache.fineract.portfolio.search.service.SearchReadPlatformService;
+import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -52,21 +56,26 @@ import org.springframework.stereotype.Component;
 public class SearchApiResource {
 
     private final Set<String> searchResponseParameters = SEARCH_RESPONSE_PARAMETERS.getAllValues();
-
+    public static final String INTERBRANCH_LOAN_READ_PERMISSION = "READ_INTER_BRANCH_LOAN_DETAILS";
+    public static final String INTERBRANCH_SAVING_READ_PERMISSION = "READ_INTER_BRANCH_SAVING_DETAILS";
+    public static final List<String> INTERBRANCH_PERMISSIONS = Arrays.asList(INTERBRANCH_LOAN_READ_PERMISSION, INTERBRANCH_SAVING_READ_PERMISSION);
+    
     private final SearchReadPlatformService searchReadPlatformService;
     private final ToApiJsonSerializer<Object> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final AdHocQueryDataValidator fromApiJsonDeserializer;
+    private final PlatformSecurityContext context;
 
     @Autowired
     public SearchApiResource(final SearchReadPlatformService searchReadPlatformService,
             final ToApiJsonSerializer<Object> toApiJsonSerializer, final ApiRequestParameterHelper apiRequestParameterHelper,
-            final AdHocQueryDataValidator fromApiJsonDeserializer) {
+            final AdHocQueryDataValidator fromApiJsonDeserializer, final PlatformSecurityContext context) {
 
         this.searchReadPlatformService = searchReadPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
+        this.context = context;
 
     }
 
@@ -86,9 +95,16 @@ public class SearchApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String searchData(@Context final UriInfo uriInfo, @QueryParam("query") final String query,
-            @QueryParam("resource") final String resource ,@DefaultValue("false") @QueryParam("exactMatch")  Boolean exactMatch) {
+            @QueryParam("resource") final String resource ,@DefaultValue("false") @QueryParam("exactMatch")  Boolean exactMatch,
+            @QueryParam("officeId") final Long officeId, @DefaultValue("false") @QueryParam("isInterBranchSearch") Boolean isInterBranchSearch) {
     	
-        final SearchConditions searchConditions = new SearchConditions(query, resource,exactMatch);
+    	AppUser user = this.context.authenticatedUser();
+        Boolean isInterBranchTransaction = false;
+        if(isInterBranchSearch){
+        	isInterBranchTransaction = user.hasAnyPermission(INTERBRANCH_PERMISSIONS);
+            
+        }   
+    	final SearchConditions searchConditions = new SearchConditions(query, resource,exactMatch, officeId, isInterBranchTransaction);
 
         final Collection<SearchData> searchResults = this.searchReadPlatformService.retriveMatchingData(searchConditions);
 

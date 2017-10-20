@@ -31,11 +31,16 @@ public class SearchConditions {
 	private final Boolean shareSeach;
     private final Boolean clientIdentifierSearch;
     private  Boolean exactMatch;
+    private final Long officeId;
+    private final Boolean isInterBranchTransaction;
 
-    public SearchConditions(final String searchQueryParam, final String searchResource, Boolean exactMatch) {
+    public SearchConditions(final String searchQueryParam, final String searchResource, Boolean exactMatch,
+    		final Long officeId, final Boolean isInterBranchTransaction) {
         this.searchQuery = searchQueryParam;
         this.searchResource = searchResource;
         this.exactMatch=exactMatch;
+        this.officeId = officeId;
+        this.isInterBranchTransaction = isInterBranchTransaction;
         this.clientSearch = (null == searchResource || searchResource.toLowerCase().contains(
                 SEARCH_SUPPORTED_RESOURCES.CLIENTS.name().toLowerCase())) ? true : false;
         this.groupSearch = (null == searchResource || searchResource.toLowerCase().contains(
@@ -61,6 +66,9 @@ public class SearchConditions {
 		this.shareSeach = shareSeach;
         this.clientIdentifierSearch = clientIdentifierSearch;
         this.exactMatch=exactMatch;
+        this.officeId = null;
+        this.isInterBranchTransaction = false;
+        		
     }
 
     public String getSearchQuery() {
@@ -96,5 +104,18 @@ public class SearchConditions {
 	public Boolean isClientIdentifierSearch() {
         return this.clientIdentifierSearch;
     }
+
+	public Long getOfficeId() {
+		return this.officeId;
+	}
+
+	public Boolean isInterBranchTransaction() {
+		if(this.isInterBranchTransaction == null){
+			return false;
+		}
+		return this.isInterBranchTransaction;
+	}
+	
+	
 
 }

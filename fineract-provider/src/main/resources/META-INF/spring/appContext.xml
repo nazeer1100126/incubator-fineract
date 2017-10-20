@@ -57,7 +57,8 @@
 										  org.apache.fineract.template.service.*,
 										  org.apache.fineract.useradministration.*,
 										  org.apache.fineract.batch,
-										  org.apache.fineract.adhocquery.*">
+										  org.apache.fineract.adhocquery.*,
+										  org.apache.fineract.*">
 		<context:exclude-filter expression="org.springframework.stereotype.Controller"
 			type="annotation" />
 

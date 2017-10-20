@@ -197,7 +197,7 @@ final public class ClientData implements Comparable<ClientData> {
     }
 
     public static ClientData clientIdentifier(final Long id, final String accountNo, final String firstname, final String middlename,
-            final String lastname, final String fullname, final String displayName, final Long officeId, final String officeName) {
+            final String lastname, final String fullname, final String displayName, final Long officeId, final String officeName, Long imageId) {
 
         final Long transferToOfficeId = null;
         final String transferToOfficeName = null;
@@ -206,7 +206,6 @@ final public class ClientData implements Comparable<ClientData> {
         final LocalDate dateOfBirth = null;
         final CodeValueData gender = null;
         final LocalDate activationDate = null;
-        final Long imageId = null;
         final Long staffId = null;
         final String staffName = null;
         final Collection<OfficeData> allowedOffices = null;

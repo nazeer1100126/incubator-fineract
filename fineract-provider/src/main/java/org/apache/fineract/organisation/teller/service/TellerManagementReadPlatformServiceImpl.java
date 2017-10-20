@@ -532,21 +532,21 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                 + ctm.savingsTxnSchema()
                 + " where sav_txn.is_reversed = 0 and c.id = ? and sav.currency_code = ? and o.hierarchy like ? and "
                 + " sav_txn.transaction_date between c.start_date and date_add(c.end_date, interval 1 day) "
-                + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal', 'Annual Fee', 'Waive Charge', 'Interest Posting', 'Overdraft Interest') "
+                + " and renum.enum_value in ('deposit','withdrawal','Interest Posting', 'Overdraft Interest') "
                 + " and (sav_txn.payment_detail_id IS NULL OR payType.is_cash_payment = 1) "
                 + " AND acnttrans.id IS NULL ) "
                 + " union (select "
                 + ctm.loansTxnSchema()
                 + " where loan_txn.is_reversed = 0 and c.id = ? and loan.currency_code = ? and o.hierarchy like ? and "
                 + " loan_txn.transaction_date between c.start_date and date_add(c.end_date, interval 1 day) "
-                + " and renum.enum_value in ('REPAYMENT_AT_DISBURSEMENT','REPAYMENT', 'RECOVERY_REPAYMENT','DISBURSEMENT', 'CHARGE_PAYMENT', 'WAIVE_CHARGES', 'WAIVE_INTEREST', 'WRITEOFF') "
+                + " and renum.enum_value in ('REPAYMENT_AT_DISBURSEMENT','REPAYMENT', 'RECOVERY_REPAYMENT','DISBURSEMENT', 'CHARGE_PAYMENT') "
                 + " and (loan_txn.payment_detail_id IS NULL OR payType.is_cash_payment = 1) "
                 + " AND acnttrans.id IS NULL ) "
                 + " union (select "
                 + ctm.clientTxnSchema()
                 + " where cli_txn.is_reversed = 0 and c.id = ? and cli_txn.currency_code = ? and o.hierarchy like ? and cli_txn.transaction_date "
                 + " between c.start_date and date_add(c.end_date, interval 1 day) "
-                + " and renum.enum_value in ('PAY_CHARGE', 'WAIVE_CHARGE') "
+                + " and renum.enum_value in ('PAY_CHARGE') "
                 + " and (cli_txn.payment_detail_id IS NULL OR payType.is_cash_payment = 1) ) "
                 + " order by created_date ";
         
@@ -633,9 +633,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             sqlBuilder.append(" sav_txn.id as txn_id, null as cashier_id, ");
             sqlBuilder.append(" case ");
-            sqlBuilder.append(" 	when renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'Annual Fee') ");
+            sqlBuilder.append(" 	when renum.enum_value in ('deposit') ");
             sqlBuilder.append(" 		then 103 ");
-            sqlBuilder.append(" 	when renum.enum_value in ('withdrawal', 'Waive Charge', 'Interest Posting', 'Overdraft Interest', '') ");
+            sqlBuilder.append(" 	when renum.enum_value in ('withdrawal','Interest Posting', 'Overdraft Interest', '') ");
             sqlBuilder.append(" 		then 104 ");
             sqlBuilder.append(" 	else ");
             sqlBuilder.append(" 		105 ");
@@ -672,7 +672,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" case ");
             sqlBuilder.append(" 	when renum.enum_value in ('REPAYMENT_AT_DISBURSEMENT','REPAYMENT', 'RECOVERY_REPAYMENT', 'CHARGE_PAYMENT') ");
             sqlBuilder.append(" 		then 103 ");
-            sqlBuilder.append(" 	when renum.enum_value in ('DISBURSEMENT', 'WAIVE_INTEREST', 'WRITEOFF', 'WAIVE_CHARGES') ");
+            sqlBuilder.append(" 	when renum.enum_value in ('DISBURSEMENT') ");
             sqlBuilder.append(" 		then 104 ");
             sqlBuilder.append(" 	else ");
             sqlBuilder.append(" 		105 ");
@@ -797,9 +797,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append("	UNION ");
             sqlBuilder.append("	(select sav_txn.id as txn_id, c.id as cashier_id, ");
             sqlBuilder.append("	case ");
-            sqlBuilder.append("		when renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'Annual Fee') ");
+            sqlBuilder.append("		when renum.enum_value in ('deposit') ");
             sqlBuilder.append("			then 103 ");
-            sqlBuilder.append("		when renum.enum_value in ('withdrawal', 'Waive Charge', 'Interest Posting', 'Overdraft Interest') ");
+            sqlBuilder.append("		when renum.enum_value in ('withdrawal','Interest Posting', 'Overdraft Interest') ");
             sqlBuilder.append("			then 104 ");
             sqlBuilder.append("		else ");
             sqlBuilder.append("			105 ");
@@ -837,7 +837,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append("	case ");
             sqlBuilder.append("		when renum.enum_value in ('REPAYMENT_AT_DISBURSEMENT','REPAYMENT', 'RECOVERY_REPAYMENT', 'CHARGE_PAYMENT') ");
             sqlBuilder.append("			then 103 ");
-            sqlBuilder.append("		when renum.enum_value in ('DISBURSEMENT', 'WAIVE_INTEREST', 'WRITEOFF', 'WAIVE_CHARGES') ");
+            sqlBuilder.append("		when renum.enum_value in ('DISBURSEMENT') ");
             sqlBuilder.append("			then 104 ");
             sqlBuilder.append("		else ");
             sqlBuilder.append("			105 ");
@@ -875,8 +875,6 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append("	case ");
             sqlBuilder.append("		WHEN renum.enum_value IN ('PAY_CHARGE') ");
             sqlBuilder.append("			then 103 ");
-            sqlBuilder.append("		WHEN renum.enum_value IN ('WAIVE_CHARGE') ");
-            sqlBuilder.append("			then 104 ");
             sqlBuilder.append("		else ");
             sqlBuilder.append("			105 ");
             sqlBuilder.append("	end as cash_txn_type, ");

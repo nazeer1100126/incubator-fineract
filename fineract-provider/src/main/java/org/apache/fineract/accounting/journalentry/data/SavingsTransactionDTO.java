@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.fineract.portfolio.savings.data.SavingsAccountSubTransactionEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 
 public class SavingsTransactionDTO {
@@ -44,6 +45,9 @@ public class SavingsTransactionDTO {
     private final List<TaxPaymentDTO> taxPayments;
 
     private final boolean isAccountTransfer;
+    
+    private SavingsAccountSubTransactionEnumData transactionSubType;
+    private Long createdAtOfficeId;
 
     public SavingsTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
             final SavingsAccountTransactionEnumData transactionType, final BigDecimal amount, final boolean reversed,
@@ -113,6 +117,37 @@ public class SavingsTransactionDTO {
 
     public List<TaxPaymentDTO> getTaxPayments() {
         return this.taxPayments;
+    }
+
+	public SavingsAccountSubTransactionEnumData getTransactionSubType() {
+		return this.transactionSubType;
+	}
+
+	public void setTransactionSubType(
+			SavingsAccountSubTransactionEnumData transactionSubType) {
+		this.transactionSubType = transactionSubType;
+	}
+
+	public Long getCreatedAtOfficeId() {
+		return this.createdAtOfficeId;
+	}
+
+	public void setCreatedAtOfficeId(Long createdAtOfficeId) {
+		this.createdAtOfficeId = createdAtOfficeId;
+	}
+    
+    public boolean isInterBranchDeposit(){
+    	if(transactionSubType==null){
+    		return false;
+    	}
+    	return transactionSubType.isInterBranchDeposit();
+    }
+    
+    public boolean isInterBranchWithdrawal(){
+    	if(transactionSubType==null){
+    		return false;
+    	}
+    	return transactionSubType.isInterBranchWithdrawal() ;
     }
 
 }

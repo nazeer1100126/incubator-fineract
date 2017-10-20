@@ -45,4 +45,8 @@ public interface ClientReadPlatformService {
     Collection<ClientData> retrieveActiveClientMembersOfCenter(final Long centerId);
 
     ClientData retrieveAllNarrations(String clientNarrations);
+    
+    ClientData retrieveOneWithInterBranchDetails(Long clientId);
+    
+    ClientData retrieveOneWithInterBranchBasicDetails(Long clientId);
 }

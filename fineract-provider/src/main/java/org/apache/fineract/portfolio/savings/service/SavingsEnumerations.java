@@ -28,6 +28,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountOnHoldTransactionType
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
 import org.apache.fineract.portfolio.savings.RecurringDepositType;
+import org.apache.fineract.portfolio.savings.SavingsAccountSubTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
@@ -37,6 +38,7 @@ import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsWithdrawalFeesType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumData;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountSubTransactionEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
@@ -833,6 +835,29 @@ public class SavingsEnumerations {
                         DepositAccountOnHoldTransactionType.RELEASE.getCode(), "release");
             break;
 
+        }
+        return optionData;
+    }
+    
+    public static SavingsAccountSubTransactionEnumData subTransactionType(final Integer transactionType) {
+        return subTransactionType(SavingsAccountSubTransactionType.fromInt(transactionType));
+    }
+    
+    public static SavingsAccountSubTransactionEnumData subTransactionType(final SavingsAccountSubTransactionType type) {
+        SavingsAccountSubTransactionEnumData optionData = null;
+
+        switch (type) {
+            case INTERBRANCH_DEPOSIT:
+                optionData = new SavingsAccountSubTransactionEnumData(SavingsAccountSubTransactionType.INTERBRANCH_DEPOSIT.getValue().longValue(),
+                        SavingsAccountSubTransactionType.INTERBRANCH_DEPOSIT.getCode(), "Inter Deposit");
+            break;
+            case INTERBRANCH_WITHDRAWAL:
+                optionData = new SavingsAccountSubTransactionEnumData(SavingsAccountSubTransactionType.INTERBRANCH_WITHDRAWAL.getValue().longValue(),
+                        SavingsAccountSubTransactionType.INTERBRANCH_WITHDRAWAL.getCode(), "Inter Withdrawal");
+            break;
+            default: 
+                optionData = new SavingsAccountSubTransactionEnumData(SavingsAccountSubTransactionType.INVALID.getValue().longValue(),
+                        SavingsAccountSubTransactionType.INVALID.getCode(), "Invalid");
         }
         return optionData;
     }

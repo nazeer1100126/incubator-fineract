@@ -537,7 +537,7 @@ public class AppUser extends AbstractPersistableCustom<Long> implements Platform
         return !hasAnyPermission(permissions);
     }
 
-    private boolean hasAnyPermission(final List<String> permissions) {
+    public boolean hasAnyPermission(final List<String> permissions) {
         boolean hasAtLeastOneOf = false;
 
         for (final String permissionCode : permissions) {

@@ -144,20 +144,26 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     @Override
     public Collection<SavingsAccountData> retrieveActiveForLookup(final Long clientId, DepositAccountType depositAccountType) {
-
+    	final AppUser currentUser = this.context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
         final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
-        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? ");
+        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and o.hierarchy like ? ");
 
-        final Object[] queryParameters = new Object[] { clientId, depositAccountType.getValue() };
+        final Object[] queryParameters = new Object[] { clientId, depositAccountType.getValue(), hierarchySearchString };
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.savingAccountMapper, queryParameters);
     }
 
     @Override
     public Collection<SavingsAccountData> retrieveActiveForLookup(final Long clientId, DepositAccountType depositAccountType, String currencyCode) {
-        final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
-        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and sa.currency_code = ? ");
+    	final AppUser currentUser = this.context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+    	
+    	final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
+        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and sa.currency_code = ? and o.hierarchy like ? ");
 
-        final Object[] queryParameters = new Object[] { clientId, depositAccountType.getValue(), currencyCode };
+        final Object[] queryParameters = new Object[] { clientId, depositAccountType.getValue(), currencyCode, hierarchySearchString };
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.savingAccountMapper, queryParameters);
     }
     
@@ -217,7 +223,22 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public SavingsAccountData retrieveOne(final Long accountId) {
 
         try {
-            final String sql = "select " + this.savingAccountMapper.schema() + " where sa.id = ?";
+        	 final AppUser currentUser = this.context.authenticatedUser();
+             final String hierarchy = currentUser.getOffice().getHierarchy();
+             String hierarchySearchString = hierarchy + "%";
+            final String sql = "select " + this.savingAccountMapper.schema() + " where sa.id = ? and o.hierarchy like ? ";
+
+            return this.jdbcTemplate.queryForObject(sql, this.savingAccountMapper, new Object[] { accountId, hierarchySearchString });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(accountId);
+        }
+    }
+    
+    @Override
+    public SavingsAccountData retrieveInterBranchSavingAccount(final Long accountId) {
+
+        try {
+        	final String sql = "select " + this.savingAccountMapper.schema() + " where sa.id = ? ";
 
             return this.jdbcTemplate.queryForObject(sql, this.savingAccountMapper, new Object[] { accountId });
         } catch (final EmptyResultDataAccessException e) {
@@ -233,7 +254,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final StringBuilder sqlBuilder = new StringBuilder(400);
             sqlBuilder.append("sa.id as id, sa.account_no as accountNo, sa.external_id as externalId, ");
             sqlBuilder.append("sa.deposit_type_enum as depositType, ");
-            sqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
+            sqlBuilder.append("c.id as clientId, c.display_name as clientName,c.account_no as clientAccountNumber, o.name as clientOfficeName, ");
             sqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
             sqlBuilder.append("sp.id as productId, sp.name as productName, ");
             sqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, ");
@@ -320,6 +341,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
             sqlBuilder.append("left join m_client c ON c.id = sa.client_id ");
             sqlBuilder.append("left join m_group g ON g.id = sa.group_id ");
+            sqlBuilder.append(" join m_office o ON (o.id = c.office_id or o.id = g.office_id ) ");
             sqlBuilder.append("left join m_staff s ON s.id = sa.field_officer_id ");
             sqlBuilder.append("left join m_appuser sbu on sbu.id = sa.submittedon_userid ");
             sqlBuilder.append("left join m_appuser rbu on rbu.id = sa.rejectedon_userid ");
@@ -349,7 +371,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final String groupName = rs.getString("groupName");
             final Long clientId = JdbcSupport.getLong(rs, "clientId");
             final String clientName = rs.getString("clientName");
-
+            final String clientAccountNumber = rs.getString("clientAccountNumber");
+            final String clientOfficeName = rs.getString("clientOfficeName");
+            
             final Long productId = rs.getLong("productId");
             final String productName = rs.getString("productName");
 
@@ -550,7 +574,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     summary, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, 
-                    taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, onHoldAmount);
+                    taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, onHoldAmount,
+                    clientOfficeName, clientAccountNumber);
         }
     }
 
@@ -1093,13 +1118,17 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
             final SavingsAccountApplicationTimelineData timeline = SavingsAccountApplicationTimelineData.templateDefault();
             final EnumOptionData depositType = null;
+            final String clientOfficeName = null;
+            final String clientAccountNumber = null;
+            
             return SavingsAccountData.instance(null, null, depositType, null, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency,
                     nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                     interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     summary, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, 
-                    taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
+                    taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold,
+                    clientOfficeName, clientAccountNumber);
         }
     }
 

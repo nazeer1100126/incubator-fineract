@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionSubType;
 
 public class LoanTransactionDTO {
 
@@ -52,11 +53,14 @@ public class LoanTransactionDTO {
     private final boolean isAccountTransfer;
 
     private boolean isLoanToLoanTransfer;
+    private Long createdAtOfficeId;
+    private final LoanTransactionEnumData transactionSubType;
 
     public LoanTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
             final LoanTransactionEnumData transactionType, final BigDecimal amount, final BigDecimal principal, final BigDecimal interest,
             final BigDecimal fees, final BigDecimal penalties, final BigDecimal overPayment, final boolean reversed,
-            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments, boolean isAccountTransfer) {
+            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments, boolean isAccountTransfer, final Long createdAtOfficeId,
+            LoanTransactionEnumData transactionSubType) {
         this.paymentTypeId = paymentTypeId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
@@ -72,6 +76,8 @@ public class LoanTransactionDTO {
         this.overPayment = overPayment;
         this.officeId = officeId;
         this.isAccountTransfer = isAccountTransfer;
+        this.createdAtOfficeId = createdAtOfficeId;
+        this.transactionSubType = transactionSubType;
     }
 
     public Long getOfficeId() {
@@ -140,5 +146,15 @@ public class LoanTransactionDTO {
 
         public boolean isLoanToLoanTransfer(){
             return this.isLoanToLoanTransfer;
+        }
+        
+        public boolean isInterBranchLoanRepayment() {
+            if (this.transactionSubType == null) { return false; }
+            return this.transactionSubType.getCode().equals(LoanTransactionSubType.INTERBRANCH_LOAN_REPAYMENT.getCode());
+
+        }
+
+        public Long getCreatedAtOfficeId() {
+            return this.createdAtOfficeId;
         }
 }

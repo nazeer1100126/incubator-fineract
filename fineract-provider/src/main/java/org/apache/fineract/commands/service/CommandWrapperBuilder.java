@@ -3041,4 +3041,71 @@ public class CommandWrapperBuilder {
         this.json = "{}";
         return this;
     }
+
+
+    public CommandWrapperBuilder interBranchLoanRepaymentTransaction(final Long loanId) {
+        this.actionName = "INTERBRANCH_REPAYMENT";
+        this.entityName = "LOAN";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/interbranch/loans/"+loanId+"/repayment/";
+        return this;
+    }
+
+    public CommandWrapperBuilder interBranchAdjustTransaction(final Long loanId, final Long transactionId) {
+        this.actionName = "INTERBRANCH_ADJUST";
+        this.entityName = "LOAN";
+        this.entityId = transactionId;
+        this.loanId = loanId;
+        this.href = "/interbranch/loans/" + loanId + "/transactions/" + transactionId+"/undo";
+        return this;
+    }
+
+    public CommandWrapperBuilder interBranchSavingsAccountDeposit(final Long accountId) {
+        this.actionName = "INTERBRANCH_DEPOSIT";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/interbranch/savingsaccounts/" + accountId+"/deposit";
+        return this;
+    }
+
+    public CommandWrapperBuilder interBranchSavingsAccountWithdrawal(final Long accountId) {
+        this.actionName = "INTERBRANCH_WITHDRAWAL";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/interbranch/savingsaccounts/" + accountId+"/withdrawal";
+        return this;
+    }
+    
+    public CommandWrapperBuilder interBranchUndoSavingsAccountTransaction(final Long accountId, final Long transactionId) {
+        this.actionName = "INTERBRANCH_UNDOTRANSACTION";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.subentityId = transactionId;
+        this.transactionId = transactionId.toString();
+        this.href = "/interbranch/savingsaccounts/" + accountId + "/transactions/" + transactionId+"/undo";
+        return this;
+    }
+
+    public CommandWrapperBuilder interBranchAccountTransfer() {
+        this.actionName = "INTERBRANCH_TRANSFER";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = null;
+        this.entityId = null;
+        this.href = "/interbranch/accounttransfers";
+        return this;
+    }
+    
+    public CommandWrapperBuilder payInterBranchSavingsAccountCharge(final Long savingsAccountId, final Long savingsAccountChargeId) {
+        this.actionName = "INTERBRANCH_PAY";
+        this.entityName = "SAVINGSACCOUNTCHARGE";
+        this.entityId = savingsAccountChargeId;
+        this.savingsId = savingsAccountId;
+        this.href = "/interbranch/savingsaccounts/" + savingsAccountId + "/charges/" + savingsAccountChargeId+"/pay";
+        return this;
+
+    }
 }

@@ -28,6 +28,7 @@ import org.apache.fineract.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTermVariationType;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionSubType;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -81,6 +82,28 @@ public class LoanEnumerations {
 
     public static EnumOptionData loanTermFrequencyType(final int id) {
         return loanTermFrequencyType(PeriodFrequencyType.fromInt(id));
+    }
+    
+
+    public static LoanTransactionEnumData transactionSubType(final Integer id) {
+        return transactionSubType(LoanTransactionSubType.fromInt(id));
+    }
+
+    public static LoanTransactionEnumData transactionSubType(final LoanTransactionSubType subType) {
+        LoanTransactionEnumData optionData = null;
+        switch (subType) {
+            case INVALID:
+                optionData = new LoanTransactionEnumData(LoanTransactionSubType.INVALID.getValue().longValue(),
+                        LoanTransactionSubType.INVALID.getCode(), "Invalid");
+            break;
+            case INTERBRANCH_LOAN_REPAYMENT:
+                optionData = new LoanTransactionEnumData(LoanTransactionSubType.INTERBRANCH_LOAN_REPAYMENT.getValue().longValue(),
+                        LoanTransactionSubType.INTERBRANCH_LOAN_REPAYMENT.getCode(), "Interbranch Loan_Repayment");
+            break;
+            default:
+            break;
+        }
+        return optionData;
     }
 
     public static EnumOptionData loanTermFrequencyType(final PeriodFrequencyType type) {

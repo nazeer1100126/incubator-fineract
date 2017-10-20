@@ -73,6 +73,9 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
             else if (loanTransactionDTO.getTransactionType().isRepayment()
                     || loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement()
                     || loanTransactionDTO.getTransactionType().isChargePayment()) {
+            	if(loanTransactionDTO.isInterBranchLoanRepayment() && !loanTransactionDTO.isAccountTransfer()){
+                    createInterBranchJournalEntriesForLoanRepayments(loanDTO, loanTransactionDTO);
+                }
                 createJournalEntriesForRepaymentsAndWriteOffs(loanDTO, loanTransactionDTO, office, false, loanTransactionDTO
                         .getTransactionType().isRepaymentAtDisbursement());
             }
@@ -98,6 +101,28 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
                 createJournalEntriesForRefundForActiveLoan(loanDTO, loanTransactionDTO, office);
             }
         }
+    }
+    
+    /*
+     * this will create inter branch journal entry for both debit and credit 
+     * it handles the reversal also. 
+     */
+    
+    private void createInterBranchJournalEntriesForLoanRepayments(final LoanDTO loanDTO, final LoanTransactionDTO loanTransactionDTO){
+    	final Long loanProductId = loanDTO.getLoanProductId();
+        final Long loanId = loanDTO.getLoanId();
+        final String currencyCode = loanDTO.getCurrencyCode();
+
+        // transaction properties
+        final String transactionId = loanTransactionDTO.getTransactionId();
+        final Date transactionDate = loanTransactionDTO.getTransactionDate();
+        final boolean isReversal = loanTransactionDTO.isReversed();
+        final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
+        final Office office = this.helper.getOfficeById(loanTransactionDTO.getCreatedAtOfficeId());
+        this.helper.createCashBasedJournalEntriesAndReversalsForLoan(office, currencyCode,
+                ACCRUAL_ACCOUNTS_FOR_LOAN.FUND_SOURCE.getValue(), FINANCIAL_ACTIVITY.INTERBRANCH_LOAN_TRANSACTION.getValue(), loanProductId,
+                paymentTypeId, loanId, transactionId, transactionDate, loanTransactionDTO.getAmount(), isReversal);
+        
     }
 
     /**
