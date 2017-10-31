@@ -770,8 +770,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
-
-            return ClientData.clientIdentifier(id, accountNo, firstname, middlename, lastname, fullname, displayName, officeId, officeName);
+            Long imageId = null;
+            return ClientData.clientIdentifier(id, accountNo, firstname, middlename, lastname, fullname, displayName, officeId, officeName, imageId);
         }
     }
 
@@ -794,5 +794,75 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         return ClientData.template(null, null, null, null, narrations, null, null, clientTypeOptions, clientClassificationOptions, 
         		clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientLegalFormOptions,null,null, null);
     }
+
+    @Override
+    public ClientData retrieveOneWithInterBranchDetails(final Long clientId) {
+        try {
+            final ClientMapper clientMapper = new ClientMapper();
+            final String sql = "select  " + clientMapper.schema()
+                    + " where c.id = ?";
+            final ClientData clientData = this.jdbcTemplate.queryForObject(sql, clientMapper, new Object[] {
+                    clientId });
+
+            return clientData;
+
+        } catch (final EmptyResultDataAccessException e) {
+            throw new ClientNotFoundException(clientId);
+        }
+    }
+    
+    private static final class ClientBasicDetailsMapper implements RowMapper<ClientData> {
+
+        private final String schema;
+
+        public ClientBasicDetailsMapper() {
+            final StringBuilder builder = new StringBuilder(400);
+            builder.append("c.id as id, c.account_no as accountNo,");
+            builder.append("c.display_name as displayName,c.image_id as imageId,");
+            builder.append(" c.office_id as officeId, o.name as officeName ");
+            builder.append("from m_client c ");
+            builder.append("join m_office o on o.id = c.office_id ");
+            this.schema = builder.toString();
+        }
+
+        public String schema() {
+            return this.schema;
+        }
+
+        @Override
+        public ClientData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            //basic details
+            final Long id = JdbcSupport.getLong(rs, "id");
+            final String accountNo = rs.getString("accountNo");
+            final String displayName = rs.getString("displayName");
+            final Long imageId = JdbcSupport.getLong(rs, "imageId");
+            
+            //office details
+            final Long officeId = JdbcSupport.getLong(rs, "officeId");
+            final String officeName = rs.getString("officeName");
+            final String firstname = null; final String middlename = null;
+            final String lastname = null; final String fullname = null;
+            return ClientData.clientIdentifier(id, accountNo, firstname, middlename, lastname, fullname, displayName, officeId, officeName, imageId);
+
+        }
+    }
+
+
+	@Override
+	public ClientData retrieveOneWithInterBranchBasicDetails(Long clientId) {
+		try {
+            final ClientBasicDetailsMapper clientMapper = new ClientBasicDetailsMapper();
+            final String sql = "select  " + clientMapper.schema()
+                    + " where c.id = ?";
+            final ClientData clientData = this.jdbcTemplate.queryForObject(sql, clientMapper, new Object[] {
+                    clientId });
+
+            return clientData;
+
+        } catch (final EmptyResultDataAccessException e) {
+            throw new ClientNotFoundException(clientId);
+        }
+	}
 
 }

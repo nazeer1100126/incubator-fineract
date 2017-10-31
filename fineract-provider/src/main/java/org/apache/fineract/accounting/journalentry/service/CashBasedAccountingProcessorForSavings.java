@@ -117,6 +117,15 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
                             savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                } else if(savingsTransactionDTO.isInterBranchDeposit()){
+                	final Office createdAtOffice = this.helper.getOfficeById(savingsTransactionDTO.getCreatedAtOfficeId());
+                	this.helper.createCashBasedJournalEntriesAndReversalsForSavings(createdAtOffice, currencyCode,
+                			CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(), FINANCIAL_ACTIVITY.INTERBRANCH_SAVING_TRANSACTION.getValue(),
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                	
+                	this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                			FINANCIAL_ACTIVITY.INTERBRANCH_SAVING_TRANSACTION.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
                 } else {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
@@ -135,6 +144,15 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                 if (savingsTransactionDTO.isAccountTransfer()) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(),
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                } else if(savingsTransactionDTO.isInterBranchWithdrawal()){
+                	final Office createdAtOffice = this.helper.getOfficeById(savingsTransactionDTO.getCreatedAtOfficeId());
+                	this.helper.createCashBasedJournalEntriesAndReversalsForSavings(createdAtOffice, currencyCode,
+                			FINANCIAL_ACTIVITY.INTERBRANCH_SAVING_TRANSACTION.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue(),
+                            savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                	
+                	this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                			CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),FINANCIAL_ACTIVITY.INTERBRANCH_SAVING_TRANSACTION.getValue() ,
                             savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
                 } else {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,

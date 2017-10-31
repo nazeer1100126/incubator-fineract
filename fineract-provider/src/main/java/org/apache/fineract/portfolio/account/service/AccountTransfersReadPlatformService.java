@@ -47,4 +47,7 @@ public interface AccountTransfersReadPlatformService {
 
 	BigDecimal getTotalTransactionAmount(Long accountId, Integer accountType,
 			LocalDate transactionDate);
+	
+	 AccountTransferData retrieveInterBranchTemplate(Long fromOfficeId, Long fromClientId, Long fromAccountId, Integer fromAccountType,
+	            Long toOfficeId, Long toClientId, Integer toAccountType);
 }

@@ -69,6 +69,7 @@ import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountSubTransactionEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
@@ -142,6 +143,8 @@ public class AccountingProcessorHelper {
             final BigDecimal overPayments = (BigDecimal) map.get("overPaymentPortion");
             final boolean reversed = (Boolean) map.get("reversed");
             final Long paymentTypeId = (Long) map.get("paymentTypeId");
+            final LoanTransactionEnumData transactionSubType = (LoanTransactionEnumData) map.get("subType");
+            Long createdAtOfficeId = (Long) map.get("createdAtOffice");
 
             final List<ChargePaymentDTO> feePaymentDetails = new ArrayList<>();
             final List<ChargePaymentDTO> penaltyPaymentDetails = new ArrayList<>();
@@ -169,7 +172,7 @@ public class AccountingProcessorHelper {
             }
             final LoanTransactionDTO transaction = new LoanTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
                     transactionDate, transactionType, amount, principal, interest, fees, penalties, overPayments, reversed,
-                    feePaymentDetails, penaltyPaymentDetails, isAccountTransfer);
+                    feePaymentDetails, penaltyPaymentDetails, isAccountTransfer,createdAtOfficeId,transactionSubType);
             Boolean isLoanToLoanTransfer = (Boolean) accountingBridgeData.get("isLoanToLoanTransfer");
             if(isLoanToLoanTransfer != null && isLoanToLoanTransfer){
                 transaction.setIsLoanToLoanTransfer(true);
@@ -205,7 +208,10 @@ public class AccountingProcessorHelper {
             final boolean reversed = (Boolean) map.get("reversed");
             final Long paymentTypeId = (Long) map.get("paymentTypeId");
             final BigDecimal overdraftAmount = (BigDecimal) map.get("overdraftAmount");
-
+            
+            final SavingsAccountSubTransactionEnumData transactionSubType = (SavingsAccountSubTransactionEnumData) map.get("subTypeOf");
+            Long createdAtOfficeId = (Long) map.get("createdAtOffice");
+            
             final List<ChargePaymentDTO> feePayments = new ArrayList<>();
             final List<ChargePaymentDTO> penaltyPayments = new ArrayList<>();
             // extract charge payment details (if exists)
@@ -245,7 +251,8 @@ public class AccountingProcessorHelper {
             final SavingsTransactionDTO transaction = new SavingsTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
                     transactionDate, transactionType, amount, reversed, feePayments, penaltyPayments, overdraftAmount, isAccountTransfer,
                     taxPayments);
-
+            transaction.setCreatedAtOfficeId(createdAtOfficeId);
+            transaction.setTransactionSubType(transactionSubType);
             newSavingsTransactions.add(transaction);
 
         }

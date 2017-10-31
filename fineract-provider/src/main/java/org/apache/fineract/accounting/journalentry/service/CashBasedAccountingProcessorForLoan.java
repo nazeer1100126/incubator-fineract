@@ -70,7 +70,10 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
             else if (loanTransactionDTO.getTransactionType().isRepayment()
                     || loanTransactionDTO.getTransactionType().isRepaymentAtDisbursement()
                     || loanTransactionDTO.getTransactionType().isChargePayment()) {
-                createJournalEntriesForRepayments(loanDTO, loanTransactionDTO, office);
+            	if(loanTransactionDTO.isInterBranchLoanRepayment() && !loanTransactionDTO.isAccountTransfer()){
+                    createInterBranchJournalEntriesForLoanRepayments(loanDTO, loanTransactionDTO);
+                }
+            	createJournalEntriesForRepayments(loanDTO, loanTransactionDTO, office);
             }
 
             /** Logic for handling recovery payments **/
@@ -106,6 +109,28 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
                 createJournalEntriesForRefundForActiveLoan(loanDTO, loanTransactionDTO, office);
             }
         }
+    }
+    
+    /*
+     * this will create inter branch journal entry for both debit and credit 
+     * it handles the reversal also. 
+     */
+    
+    private void createInterBranchJournalEntriesForLoanRepayments(final LoanDTO loanDTO, final LoanTransactionDTO loanTransactionDTO){
+    	final Long loanProductId = loanDTO.getLoanProductId();
+        final Long loanId = loanDTO.getLoanId();
+        final String currencyCode = loanDTO.getCurrencyCode();
+
+        // transaction properties
+        final String transactionId = loanTransactionDTO.getTransactionId();
+        final Date transactionDate = loanTransactionDTO.getTransactionDate();
+        final boolean isReversal = loanTransactionDTO.isReversed();
+        final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
+        final Office office = this.helper.getOfficeById(loanTransactionDTO.getCreatedAtOfficeId());
+        this.helper.createCashBasedJournalEntriesAndReversalsForLoan(office, currencyCode,
+                CASH_ACCOUNTS_FOR_LOAN.FUND_SOURCE.getValue(), FINANCIAL_ACTIVITY.INTERBRANCH_LOAN_TRANSACTION.getValue(), loanProductId,
+                paymentTypeId, loanId, transactionId, transactionDate, loanTransactionDTO.getAmount(), isReversal);
+        
     }
 
     /**
@@ -250,6 +275,10 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
         } else if (loanTransactionDTO.isAccountTransfer()) {
             this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode, FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(),
                     loanProductId, paymentTypeId, loanId, transactionId, transactionDate, totalDebitAmount, isReversal);
+        } else if (loanTransactionDTO.isInterBranchLoanRepayment()) {
+        	this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode, FINANCIAL_ACTIVITY.INTERBRANCH_LOAN_TRANSACTION.getValue(),
+                    loanProductId, paymentTypeId, loanId, transactionId, transactionDate, totalDebitAmount, isReversal);
+        	
         } else {
             this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode, CASH_ACCOUNTS_FOR_LOAN.FUND_SOURCE.getValue(),
                     loanProductId, paymentTypeId, loanId, transactionId, transactionDate, totalDebitAmount, isReversal);

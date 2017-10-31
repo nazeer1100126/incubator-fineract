@@ -41,6 +41,8 @@ import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityEx
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
@@ -48,9 +50,11 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
@@ -58,13 +62,19 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("singleton")
 public class SavingsAccountTransactionsApiResource {
-
+	
+	private final String SAVING_USER_OFFICE_FINDER_SQL = "SELECT CASE WHEN (COUNT(*) > 0) THEN TRUE ELSE FALSE END " + "FROM m_appuser ma "
+            + "JOIN m_office ao ON ao.id = ma.office_id " + "JOIN m_savings_account ml ON ml.id = ? "
+            + "LEFT JOIN m_client mc ON mc.id = ml.client_id " + "LEFT JOIN m_group mg ON mg.id = ml.group_id "
+            + "LEFT JOIN m_office mco ON mco.id = mc.office_id " + "LEFT JOIN m_office mgo ON mgo.id = mg.office_id "
+            + "WHERE ma.id = ? AND (mco.hierarchy LIKE CONCAT('%',ao.hierarchy,'%') OR mgo.hierarchy LIKE CONCAT('%',ao.hierarchy,'%'))";
     private final PlatformSecurityContext context;
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
     public SavingsAccountTransactionsApiResource(final PlatformSecurityContext context,
@@ -72,13 +82,15 @@ public class SavingsAccountTransactionsApiResource {
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+            PaymentTypeReadPlatformService paymentTypeReadPlatformService,
+            final RoutingDataSource dataSource) {
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     private boolean is(final String commandParam, final String commandValue) {
@@ -168,12 +180,12 @@ public class SavingsAccountTransactionsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String adjustTransaction(@PathParam("savingsId") final Long savingsId, @PathParam("transactionId") final Long transactionId,
             @QueryParam("command") final String commandParam, final String apiRequestBodyAsJson) {
-
+    	AppUser appUser =this.context.authenticatedUser();
         String jsonApiRequest = apiRequestBodyAsJson;
         if (StringUtils.isBlank(jsonApiRequest)) {
             jsonApiRequest = "{}";
         }
-
+        validateCommand(savingsId, appUser);
         final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
 
         CommandProcessingResult result = null;
@@ -191,5 +203,19 @@ public class SavingsAccountTransactionsApiResource {
         }
 
         return this.toApiJsonSerializer.serialize(result);
+    }
+    
+    public Boolean hasAccessToSaving(final Long savingId, final Long appUserId) {
+        return this.jdbcTemplate.queryForObject(SAVING_USER_OFFICE_FINDER_SQL, Boolean.class, savingId, appUserId);
+    }
+    
+    public void validateCommand(Long savingId, AppUser appUser) {
+        boolean hasAccess = true;
+        hasAccess = this.hasAccessToSaving(savingId, appUser.getId());
+        if (!hasAccess) {
+            final String authorizationMessage = "User has no authority to modify Saving with id: " + savingId;
+            throw new NoAuthorizationException(authorizationMessage);
+        }
+
     }
 }

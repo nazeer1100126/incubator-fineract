@@ -134,14 +134,14 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
     @OneToMany(cascade = CascadeType.ALL,  orphanRemoval = true, fetch=FetchType.EAGER)
     @JoinColumn(name = "loan_transaction_id", referencedColumnName= "id" , nullable = false)
     private Set<LoanTransactionToRepaymentScheduleMapping> loanTransactionToRepaymentScheduleMappings = new HashSet<>();
+    
+    @Column(name = "transaction_sub_type_enum", nullable = true)
+    private Integer subTypeOf;
+    
+    @Column(name = "created_at_office", nullable = true)
+    private Long createdAtOfficeId;
 
     protected LoanTransaction() {
-       /* this.loan = null;
-        this.dateOf = null;
-        this.typeOf = null;
-        this.submittedOnDate = DateUtils.getDateOfTenant();
-        this.createdDate = new Date();
-        this.appUser = null;*/
     }
 
     public static LoanTransaction incomePosting(final Loan loan, final Office office, final Date dateOf, final BigDecimal amount,
@@ -609,7 +609,8 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         final Map<String, Object> thisTransactionData = new LinkedHashMap<>();
 
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(this.typeOf);
-
+        final LoanTransactionEnumData transactionSubType = LoanEnumerations.transactionSubType(this.subTypeOf);
+        
         thisTransactionData.put("id", getId());
         thisTransactionData.put("officeId", this.office.getId());
         thisTransactionData.put("type", transactionType);
@@ -622,7 +623,9 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
         thisTransactionData.put("feeChargesPortion", this.feeChargesPortion);
         thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
-
+        thisTransactionData.put("createdAtOffice", this.createdAtOfficeId);
+        thisTransactionData.put("subType", transactionSubType);
+        
         if (this.paymentDetail != null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
         }
@@ -791,4 +794,26 @@ public class LoanTransaction extends AbstractPersistableCustom<Long> {
                 && !(this.isDisbursement() || this.isAccrual() || this.isRepaymentAtDisbursement() || this.isNonMonetaryTransaction() || this
                         .isIncomePosting());
     }
+
+	public Integer getSubTypeOf() {
+		return this.subTypeOf;
+	}
+
+	public void setSubTypeOf(Integer subTypeOf) {
+		this.subTypeOf = subTypeOf;
+	}
+
+	public Long getCreatedAtOfficeId() {
+		return this.createdAtOfficeId;
+	}
+
+	public void setCreatedAtOfficeId(Long createdAtOfficeId) {
+		this.createdAtOfficeId = createdAtOfficeId;
+	}
+
+	public AppUser getAppUser() {
+		return this.appUser;
+	}
+
+    
 }

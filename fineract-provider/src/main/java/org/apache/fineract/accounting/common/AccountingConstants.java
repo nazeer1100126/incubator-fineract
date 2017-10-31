@@ -31,7 +31,7 @@ public class AccountingConstants {
     /*** Accounting placeholders for cash based accounting for loan products ***/
     public static enum CASH_ACCOUNTS_FOR_LOAN {
         FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), LOSSES_WRITTEN_OFF(6), TRANSFERS_SUSPENSE(
-                10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12);
+                10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12), INTERBRANCH_LOAN_TRANSACTION(13);
 
         private final Integer value;
 
@@ -238,7 +238,8 @@ public class AccountingConstants {
         ASSET_TRANSFER(100, "assetTransfer", GLAccountType.ASSET), LIABILITY_TRANSFER(200, "liabilityTransfer", GLAccountType.LIABILITY), CASH_AT_MAINVAULT(
                 101, "cashAtMainVault", GLAccountType.ASSET), CASH_AT_TELLER(102, "cashAtTeller", GLAccountType.ASSET), OPENING_BALANCES_TRANSFER_CONTRA(
                 300, "openingBalancesTransferContra", GLAccountType.EQUITY), ASSET_FUND_SOURCE(103, "fundSource", GLAccountType.ASSET), PAYABLE_DIVIDENDS(
-                201, "payableDividends", GLAccountType.LIABILITY);
+                201, "payableDividends", GLAccountType.LIABILITY), INTERBRANCH_LOAN_TRANSACTION(105, "interbranchloantransaction", GLAccountType.ASSET),
+                INTERBRANCH_SAVING_TRANSACTION(106, "interbranchsavingtransaction", GLAccountType.ASSET);
 
         private final Integer value;
         private final String code;

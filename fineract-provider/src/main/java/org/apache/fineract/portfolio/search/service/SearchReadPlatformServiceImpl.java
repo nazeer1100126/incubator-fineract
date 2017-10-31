@@ -69,7 +69,10 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
     @Override
     public Collection<SearchData> retriveMatchingData(final SearchConditions searchConditions) {
         final AppUser currentUser = this.context.authenticatedUser();
-        final String hierarchy = currentUser.getOffice().getHierarchy();
+        String hierarchy = currentUser.getOffice().getHierarchy();
+        if(searchConditions.isInterBranchTransaction() && searchConditions.getOfficeId() != null){
+        	hierarchy = this.officeReadPlatformService.retrieveOffice(searchConditions.getOfficeId()).getHierarchy();
+        }
 
         final SearchMapper rm = new SearchMapper();
 

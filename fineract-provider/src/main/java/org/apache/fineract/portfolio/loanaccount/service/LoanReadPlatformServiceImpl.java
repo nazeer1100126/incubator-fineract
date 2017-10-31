@@ -503,7 +503,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " lp.allow_variabe_installments as isvariableInstallmentsAllowed, "
                     + " lp.allow_multiple_disbursals as multiDisburseLoan,"
                     + " lp.can_define_fixed_emi_amount as canDefineInstallmentAmount,"
-                    + " c.id as clientId, c.account_no as clientAccountNo, c.display_name as clientName, c.office_id as clientOfficeId,"
+                    + " c.id as clientId, c.account_no as clientAccountNo, c.display_name as clientName, c.office_id as clientOfficeId, o.name as clientOfficeName, "
                     + " g.id as groupId, g.account_no as groupAccountNo, g.display_name as groupName,"
                     + " g.office_id as groupOfficeId, g.staff_id As groupStaffId , g.parent_id as groupParentId, (select mg.display_name from m_group mg where mg.id = g.parent_id) as centerName, "
                     + " g.hierarchy As groupHierarchy , g.level_id as groupLevel, g.external_id As groupExternalId, "
@@ -633,6 +633,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final String clientAccountNo = rs.getString("clientAccountNo");
             final Long clientOfficeId = JdbcSupport.getLong(rs, "clientOfficeId");
             final String clientName = rs.getString("clientName");
+            final String clientOfficeName = rs.getString("clientOfficeName");
 
             final Long groupId = JdbcSupport.getLong(rs, "groupId");
             final String groupName = rs.getString("groupName");
@@ -922,7 +923,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     loanProductCounter, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount, outstandingLoanBalance, inArrears,
                     graceOnArrearsAgeing, isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
                     interestRecalculationData, createStandingInstructionAtDisbursement, isvariableInstallmentsAllowed, minimumGap,
-                    maximumGap, loanSubStatus, canUseForTopup, isTopup, closureLoanId, closureLoanAccountNo, topupAmount);
+                    maximumGap, loanSubStatus, canUseForTopup, isTopup, closureLoanId, closureLoanAccountNo, topupAmount, clientOfficeName);
         }
     }
 
@@ -2135,5 +2136,24 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         }
 
     }
+
+	@Override
+	public LoanAccountData retrieveInterBranchLoan(Long loanId) {
+		try {
+			this.context.authenticatedUser();
+			final LoanMapper rm = new LoanMapper();
+
+            final StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.append("select ");
+            sqlBuilder.append(rm.loanSchema());
+            sqlBuilder.append(" join m_office o on (o.id = c.office_id or o.id = g.office_id) ");
+            sqlBuilder.append(" left join m_office transferToOffice on transferToOffice.id = c.transfer_to_office_id ");
+            sqlBuilder.append(" where l.id=? ");
+
+            return this.jdbcTemplate.queryForObject(sqlBuilder.toString(), rm, new Object[] { loanId });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new LoanNotFoundException(loanId);
+        }
+	}
     
 }

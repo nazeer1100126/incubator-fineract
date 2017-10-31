@@ -489,4 +489,14 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         }
     }
 
+    @Override
+    public AccountSummaryCollectionData retrieveClientLoanAndSavingAccountDetails(final Long clientId) {
+    	final String loanwhereClause = " where l.client_id = ?";
+        final String savingswhereClause = " where sa.client_id = ? order by sa.status_enum ASC, sa.account_no ASC";
+        final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
+        final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[] { clientId });
+        final List<ShareAccountSummaryData> shareAccounts = null;
+        return new AccountSummaryCollectionData(loanAccounts, savingsAccounts, shareAccounts);
+    }
+
 }

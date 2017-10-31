@@ -103,6 +103,8 @@ public class SavingsAccountData {
     private final BigDecimal minOverdraftForInterestCalculation;
 
     private List<DatatableData> datatables = null;
+    private final String clientOfficeName;
+    private final String clientAccountNumber;
 
     public static SavingsAccountData instance(final Long id, final String accountNo, final EnumOptionData depositType,
             final String externalId, final Long groupId, final String groupName, final Long clientId, final String clientName,
@@ -118,7 +120,7 @@ public class SavingsAccountData {
             final BigDecimal onHoldFunds, final BigDecimal nominalAnnualInterestRateOverdraft,
             final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, 
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
-            final Integer daysToDormancy, final Integer daysToEscheat) {
+            final Integer daysToDormancy, final Integer daysToEscheat, final String clientOfficeName , final String clientAccountNumber) {
 
         final Collection<SavingsProductData> productOptions = null;
         final Collection<StaffData> fieldOfficerOptions = null;
@@ -142,7 +144,7 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, clientOfficeName, clientAccountNumber);
     }
 
     public static SavingsAccountData lookup(final Long accountId, final String accountNo, final EnumOptionData depositType) {
@@ -204,7 +206,8 @@ public class SavingsAccountData {
         final Integer daysToInactive = null;
         final Integer daysToDormancy = null;
         final Integer daysToEscheat = null;
-
+        final String clientOfficeName = null;
+        final String clientAccountNumber = null;
         return new SavingsAccountData(accountId, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                 interestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -214,7 +217,7 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,clientOfficeName, clientAccountNumber);
     }
 
     public static SavingsAccountData lookupWithProductDetails(final Long accountId, final String accountNo,
@@ -274,7 +277,8 @@ public class SavingsAccountData {
         final Integer daysToInactive = null;
         final Integer daysToDormancy = null;
         final Integer daysToEscheat = null;
-
+		final String clientOfficeName = null;
+        final String clientAccountNumber = null;
         return new SavingsAccountData(accountId, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                 interestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -284,7 +288,7 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,clientOfficeName,clientAccountNumber);
     }
 
     public static SavingsAccountData withTemplateOptions(final SavingsAccountData account, final SavingsAccountData template,
@@ -320,7 +324,7 @@ public class SavingsAccountData {
                 account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
                 account.minOverdraftForInterestCalculation, account.withHoldTax, account.taxGroup, 
                 account.lastActiveTransactionDate, account.isDormancyTrackingActive, account.daysToInactive, 
-                account.daysToDormancy, account.daysToEscheat);
+                account.daysToDormancy, account.daysToEscheat, account.clientOfficeName, account.clientAccountNumber);
     }
 
     public static SavingsAccountData withTemplateOptions(final SavingsAccountData account,
@@ -345,7 +349,7 @@ public class SavingsAccountData {
                 account.overdraftLimit, account.minRequiredBalance, account.enforceMinRequiredBalance,
                 account.minBalanceForInterestCalculation, account.onHoldFunds, account.nominalAnnualInterestRateOverdraft,
                 account.minOverdraftForInterestCalculation, account.withHoldTax, account.taxGroup, account.lastActiveTransactionDate, 
-                account.isDormancyTrackingActive, account.daysToInactive, account.daysToDormancy, account.daysToEscheat);
+                account.isDormancyTrackingActive, account.daysToInactive, account.daysToDormancy, account.daysToEscheat,account.clientOfficeName, account.clientAccountNumber);
     }
 
     public static SavingsAccountData withClientTemplate(final Long clientId, final String clientName, final Long groupId,
@@ -407,7 +411,8 @@ public class SavingsAccountData {
         final Integer daysToInactive = null;
         final Integer daysToDormancy = null;
         final Integer daysToEscheat = null;
-
+		final String clientOfficeName = null;
+        final String clientAccountNumber = null;
         return new SavingsAccountData(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                 productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency, nominalAnnualInterestRate,
                 interestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -417,7 +422,7 @@ public class SavingsAccountData {
                 lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, charges, chargeOptions, allowOverdraft, overdraftLimit,
                 minRequiredBalance, enforceMinRequiredBalance, minBalanceForInterestCalculation, onHoldFunds,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, 
-                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
+                lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,clientOfficeName,clientAccountNumber);
     }
 
     private SavingsAccountData(final Long id, final String accountNo, final EnumOptionData depositType, final String externalId,
@@ -441,7 +446,7 @@ public class SavingsAccountData {
             final BigDecimal onHoldFunds, final BigDecimal nominalAnnualInterestRateOverdraft,
             final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, 
             final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
-            final Integer daysToDormancy, final Integer daysToEscheat) {
+            final Integer daysToDormancy, final Integer daysToEscheat,final String clientOfficeName , final String clientAccountNumber) {
         this.id = id;
         this.accountNo = accountNo;
         this.depositType = depositType;
@@ -507,6 +512,8 @@ public class SavingsAccountData {
         this.daysToInactive = daysToInactive;
         this.daysToDormancy = daysToDormancy;
         this.daysToEscheat = daysToEscheat;
+        this.clientOfficeName = clientOfficeName;
+        this.clientAccountNumber = clientAccountNumber;
     }
 
     private SavingsAccountChargeData getWithdrawalFee() {
